@@ -1,6 +1,8 @@
 use glam::Vec3;
 
-pub struct Matrial {
+pub struct Material {
+    pub name: String,
+
     pub albedo: Vec3,
     pub roughness: f32,
     pub metalic: f32,
@@ -9,9 +11,10 @@ pub struct Matrial {
     pub emissive_power: f32,
 }
 
-impl Default for Matrial {
+impl Default for Material {
     fn default() -> Self {
         Self {
+            name : "Default Material".to_string(),
             albedo: Vec3::ONE,
             roughness: 0.5,
             metalic: 0.0,

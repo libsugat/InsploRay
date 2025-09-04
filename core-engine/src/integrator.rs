@@ -4,17 +4,9 @@ use crate::Ray;
 use crate::cameras::SharedCamera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
-use crate::materials::Matrial;
+use crate::materials::Material;
 
-use crate::geometry::{Geometry, HitPayload, Plane, Triangle};
-
-static DEFAULT_MATERIAL: Matrial = Matrial {
-    albedo: Vec3::ONE,
-    roughness: 0.5,
-    metalic: 0.0,
-    emission_color: Vec3::ZERO,
-    emissive_power: 0.0,
-};
+use crate::geometry::{Geometry, HitPayload};
 
 #[derive(Clone, Copy)]
 pub struct Integrator {
@@ -37,6 +29,8 @@ impl Integrator {
 
         let mut light = Vec3::ZERO;
 
+        let default_material = Material::default();
+        
         let mut contribution = Vec3::ONE;
         for bounce in 0..self.bounces {
             let payload = self.trace_ray(&ray, scene);
@@ -47,9 +41,9 @@ impl Integrator {
                         scene
                             .materials
                             .get(index)
-                            .unwrap_or(&DEFAULT_MATERIAL)
+                            .unwrap_or(&default_material)
                     },
-                    None => &DEFAULT_MATERIAL
+                    None => &default_material
                 };
 
                 light += material.emission_color * material.emissive_power * contribution;
@@ -110,28 +104,15 @@ impl Integrator {
             }
         }
 
-        // test code for plane
-        let test_plane = Plane {
-            position: -Vec3::Y,
-            normal: Vec3::Y,
-            material_id: 1
-        };
-        if let Some(payload) = test_plane.intersect_ray(ray) {
-            if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
-                hit_distance = payload.hit_distance;
-                closest_hit = payload;
+        for (_i, mesh) in scene.meshes.iter().enumerate() {
+            if let Some(payload) = mesh.intersect_ray(ray) {
+                if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
+                    hit_distance = payload.hit_distance;
+                    closest_hit = payload;
+                }
             }
-        }
-
-        let test_triangle = Triangle::new((
-        Vec3::new(2.0, 1.0, -2.0),
-        Vec3::new(3.0, 1.0, -2.0),
-        Vec3::new(2.0, 2.0, -2.0),
-        ), 0);
-
-        if let Some(payload) = test_triangle.intersect_ray(ray) {
-            if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
-                closest_hit = payload;
+            else {
+                continue;
             }
         }
 

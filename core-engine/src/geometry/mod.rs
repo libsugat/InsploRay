@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::{Vec2, Vec3};
 
 use crate::Ray;
 
@@ -10,6 +10,9 @@ pub struct HitPayload {
 
     pub object_index: Option<usize>,
     pub material_index: Option<usize>,
+
+    // incase of Triangle 
+    pub uv: Option<Vec2>
 }
 
 pub trait Geometry {
@@ -24,3 +27,6 @@ pub use plane::Plane;
 
 pub mod triangle;
 pub use triangle::Triangle;
+
+pub mod mesh;
+pub use mesh::Mesh;

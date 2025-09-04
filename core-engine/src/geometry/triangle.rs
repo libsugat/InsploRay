@@ -1,12 +1,12 @@
-use glam::Vec3;
+use glam::{Vec2, Vec3};
 
 use crate::Ray;
 use crate::geometry::{Geometry, HitPayload};
 
 pub struct Triangle {
-    v0: Vec3,
-    v1: Vec3,
-    v2: Vec3,
+    pub v0: Vec3,
+    pub v1: Vec3,
+    pub v2: Vec3,
 
     normal: Vec3,
     pub material_id : i32,
@@ -62,9 +62,7 @@ impl Geometry for Triangle {
             barycentric_coords[i] = cross.length() / full_area;
         }
 
-        let _alpha = barycentric_coords[0];
-        let _beta  = barycentric_coords[1];
-        let _gamma  = barycentric_coords[2];
+        let [u,v, _w] = barycentric_coords;
 
         let material = if self.material_id < 0 {
             None
@@ -80,6 +78,8 @@ impl Geometry for Triangle {
                 world_position : phit,
                 world_normal: facing_normal,
                 material_index: material,
+
+                uv : Some(Vec2::new(u, v)),
                 ..Default::default()
             }
         )

@@ -11,4 +11,5 @@ exr = "1.73.0"
 glam = { version = "0.30.4", features = ["mint"] }
 pollster = "0.4.0"
 rand = "0.9.1"
+tobj = "4.0.3"
 

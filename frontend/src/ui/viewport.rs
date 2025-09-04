@@ -1,10 +1,11 @@
+use std::f32::consts::PI;
 use std::sync::Arc;
 use std::sync::RwLock;
 
 use imgui::Ui;
 
 use insploray::renderer::RayTracer;
-use insploray::materials::Matrial;
+use insploray::materials::Material;
 use insploray::geometry::Sphere;
 use insploray::scene::Scene;
 use insploray::cameras::Camera;
@@ -35,7 +36,6 @@ impl Viewport {
     }
 
     pub fn draw_scene_setting_window(&mut self, ui : &Ui, viewport_size: &[f32; 2]) {
-        // /*
         let mut update = false;
         if let Ok(mut scene) = self.scene.try_write() {
 
@@ -88,12 +88,23 @@ impl Viewport {
                 }
 
                 if ui.button("Add Materal") {
-                    let material = Matrial::default();
+                    let material = Material::default();
                     scene.materials.push(material);
                     update |= true;
                 }
 
                 update |= ui.color_edit3("Sky color", &mut scene.default_sky_color);
+
+                if ui.button("Get Camera Setting") {
+                        let cam = self.camera.read().unwrap();
+                        println!("Camera:");
+                        println!("\tposition : {:?}", cam.position);
+                        println!("\trotation : {:?}", cam.rotation);
+                        println!("\timage_size : {:?}", cam.image_size);
+                        println!("\tfocallength : {:?}", cam.focal_length);
+                        println!("\tsensorsize : {:?}", cam.sensor_size);
+                        drop(cam);
+                    }
             });
         drop(scene);
         
@@ -182,15 +193,18 @@ impl Viewport {
 
 impl Default for Viewport {
     fn default() -> Self {
-        let position =Vec3::new(0.0, 0.0, 2.0);
-        let camera =  Arc::new(RwLock::new(
-            PinholeCamera::new(
+        let position = Vec3::new(9.5, 2.25, 0.0);
+        let rotation = Vec3::new(0.0, PI/2.0, 0.0);
+        let mut cam = PinholeCamera::new(
                 position, 
                 Vec3::ZERO,
-                35.0,
                 55.0,
+                35.0,
                 [0,0]
-            )
+            );
+        cam.set_rotation(rotation);
+        let camera =  Arc::new(RwLock::new(
+            cam
         ));
 
         let mut renderer = RayTracer::new(0, 0);
