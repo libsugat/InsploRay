@@ -18,7 +18,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn get_example_scene() -> Self {
-        let exr_img = ExrImage::load_exr_image("./assets/env/docklands_02_1k.exr");
+        let exr_img = ExrImage::load_exr_image("./assets/env/moon_lab_1k.exr");
         if let Err(e) = &exr_img {
             println!(
                 "Current working directory: {}",

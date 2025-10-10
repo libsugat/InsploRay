@@ -1,5 +1,6 @@
 use glam::{Vec2, Vec3};
 
+use crate::acceleration_structure::AABB;
 use crate::Ray;
 use crate::geometry::{Geometry, HitPayload};
 
@@ -84,4 +85,24 @@ impl Geometry for Triangle {
             }
         )
     }
+
+    fn bounding_box(&self) -> AABB {
+        let mut min = Vec3::min(self.v0, self.v1);
+        min = Vec3::min(min, self.v2);
+
+        let mut max = Vec3::max(self.v0, self.v1);
+        max = Vec3::max(max, self.v2);
+
+        // Optional: Expand slightly to avoid degenerate boxes
+        let epsilon = 1e-4;
+        let min = Vec3::new(min.x - epsilon, min.y - epsilon, min.z - epsilon);
+        let max = Vec3::new(max.x + epsilon, max.y + epsilon, max.z + epsilon);
+
+        AABB {
+            min: min,
+            max: max
+        }
+    }
 }
+
+

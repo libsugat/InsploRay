@@ -1,7 +1,8 @@
 use glam::Vec3;
 
+use crate::acceleration_structure::AABB;
 use crate::geometry::{Geometry, HitPayload};
-use crate::Ray;
+use crate::{Ray};
 
 pub struct Sphere {
     pub position: Vec3,
@@ -50,6 +51,14 @@ impl Geometry for Sphere {
         }
         else {
             None
+        }
+    }
+
+    fn bounding_box(&self) -> AABB {
+        let bias_vec = Vec3::from((self.radius, self.radius, self.radius));
+        AABB {
+            min: self.position - bias_vec,
+            max: self.position + bias_vec
         }
     }
 }

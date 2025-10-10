@@ -1,5 +1,6 @@
 use glam::Vec3;
 
+use crate::acceleration_structure::AABB;
 use crate::geometry::{Geometry, HitPayload};
 use crate::Ray;
 
@@ -43,6 +44,13 @@ impl Geometry for Plane {
                 ..Default::default()
             }
         )
+    }
+
+    fn bounding_box(&self) -> AABB {
+        AABB{
+            min: Vec3::ZERO,
+            max: Vec3::ONE
+        }
     }
 }
 

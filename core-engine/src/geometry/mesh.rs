@@ -1,4 +1,6 @@
-use crate::{geometry::{Geometry, HitPayload, Triangle}, ray::Ray};
+use glam::Vec3;
+
+use crate::{acceleration_structure::AABB, geometry::{Geometry, HitPayload, Triangle}, ray::Ray};
 
 pub struct Mesh {
     pub name: String,
@@ -36,5 +38,12 @@ impl Geometry for Mesh {
         }
 
         Some(closest_hit)
+    }
+
+    fn bounding_box(&self) -> AABB {
+        AABB {
+            min: Vec3::ZERO,
+            max: Vec3::ONE
+        }
     }
 }

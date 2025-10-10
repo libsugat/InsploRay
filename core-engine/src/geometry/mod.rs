@@ -1,6 +1,7 @@
 use glam::{Vec2, Vec3};
 
-use crate::Ray;
+use crate::{ Ray};
+use crate::acceleration_structure::AABB;
 
 #[derive(Default, Debug)]
 pub struct HitPayload {
@@ -17,6 +18,7 @@ pub struct HitPayload {
 
 pub trait Geometry {
     fn intersect_ray(&self, ray :&Ray) -> Option<HitPayload>;
+    fn bounding_box(&self) -> AABB;
 }
 
 pub mod sphere;

@@ -19,6 +19,7 @@ The primary goal of writing a path tracer was to get a head start before getting
     - Emissive Color
     - Emissive Strength
 - Basic Tone Mapping
+- Ray Triangle Intersection _(slower algorithm)_
 - More under way✨...
 
 🖼️ Frontend (Experimental not main focus of the project)
@@ -91,12 +92,13 @@ Feel free to ask questions, suggest changes, or just explore the code!
 - [ ] Imgui does not remember the window layout, it's a know issue with imgui-rs crate (Frontend)
 
 ## 🔜 My Side Plans
-Order unknown because I am gonna join BTech soon within couple of days....
-- [ ] Ray Triangle Intersection
+Order unknown because I am BTech student unable to manage my time corrently....
+- [-] Ray Triangle Intersection
+- [-] Loading Scene (.obj`)
+- [ ] Loading Scene (`.glb`/`.gltf`)
 - [ ] Specular BRDF
 - [ ] Metallic BRDF
 - [ ] Better Scene Representation in memory
-- [ ] Loading Scene (`.glb`/`.gltf`/`.obj`)
 - [ ] Save Image (`EXR` and/or `PNG`)
 - [ ] MIS (Multiple Importance Sampling) in Primary (or currently only) Integrator
 
