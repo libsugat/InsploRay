@@ -7,7 +7,8 @@ _InsploRay: Inspire(inspiration) + Explore(Exploration) + Ray Tracing_
 The primary goal of writing a path tracer was to get a head start before getting into low level systems programming, which now grew into a project of its own. It’s being designed with modularity in mind.
 
 ## 🧩 Current Features:
-- Ray sphere intersection _(Only)_
+- Ray sphere intersection
+- Ray Triangle Intersection _(slower algorithm)_
 - Lambertian Diffuse _(Only)_
 - EXR skybox support _(for HDR environment lighting and background)_
 - Multithreaded
@@ -19,7 +20,6 @@ The primary goal of writing a path tracer was to get a head start before getting
     - Emissive Color
     - Emissive Strength
 - Basic Tone Mapping
-- Ray Triangle Intersection _(slower algorithm)_
 - More under way✨...
 
 🖼️ Frontend (Experimental not main focus of the project)
