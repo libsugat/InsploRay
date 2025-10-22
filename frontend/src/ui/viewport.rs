@@ -4,6 +4,8 @@ use std::sync::RwLock;
 
 use imgui::Ui;
 
+use insploray::acceleration_structure::AccelerationStructure;
+use insploray::acceleration_structure::BVH;
 use insploray::renderer::RayTracer;
 use insploray::materials::Material;
 use insploray::geometry::Sphere;
@@ -16,10 +18,12 @@ pub struct Viewport {
     dimensions : [u32; 2],
     pub renderer : RayTracer,
     pub scene : Arc<RwLock<Scene>>,
-    pub camera : Arc<RwLock<PinholeCamera>>
+    pub camera : Arc<RwLock<PinholeCamera>>,
 }
 
 impl Viewport {
+
+
     pub fn set_dimensions(&mut self, width : u32, height : u32) {
         self.dimensions = [width, height];
         if self.renderer.get_current_size() != self.dimensions {
@@ -28,6 +32,18 @@ impl Viewport {
     }
 
     pub fn prepare_buffer(&mut self) {
+        let mut scene = self.scene.write().unwrap();
+        match &scene.bvh {
+            Some(_) => (),
+            None => {
+                println!("Building BVH");
+                let bvh = BVH::build(&scene);
+                println!("Building BVH done!!");
+
+                scene.bvh = Some(bvh);
+            }
+        }
+        drop(scene);
         self.renderer.render(&self.scene);
     }
 
@@ -215,7 +231,7 @@ impl Default for Viewport {
             dimensions: [0,0],
             camera,
             renderer,
-            scene
+            scene,
         }
     }
 }

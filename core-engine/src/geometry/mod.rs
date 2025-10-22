@@ -21,6 +21,7 @@ pub trait Geometry {
     fn bounding_box(&self) -> AABB;
 }
 
+
 pub mod sphere;
 pub use sphere::Sphere;
 

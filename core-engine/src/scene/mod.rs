@@ -1,5 +1,6 @@
 use glam::Vec3;
 
+use crate::acceleration_structure::BVH;
 use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
@@ -14,6 +15,7 @@ pub struct Scene {
     pub default_sky_color: Vec3,
 
     pub skybox: Option<ExrImage>,
+    pub bvh : Option<BVH>
 }
 
 impl Scene {

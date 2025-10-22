@@ -4,6 +4,7 @@ use crate::acceleration_structure::AABB;
 use crate::Ray;
 use crate::geometry::{Geometry, HitPayload};
 
+#[derive(Debug, Clone, Copy)]
 pub struct Triangle {
     pub v0: Vec3,
     pub v1: Vec3,
