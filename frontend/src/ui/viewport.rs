@@ -1,24 +1,57 @@
+use std::f32::consts::PI;
 use std::sync::Arc;
 use std::sync::RwLock;
 
 use imgui::Ui;
 
+use insploray::acceleration_structure::AccelerationStructure;
+use insploray::acceleration_structure::BVH;
 use insploray::renderer::RayTracer;
+use insploray::materials::Material;
+use insploray::geometry::Sphere;
 use insploray::scene::Scene;
 use insploray::cameras::Camera;
 use insploray::cameras::PinholeCamera;
-use insploray::scene::{Sphere, Matrial};
 use insploray::Vec3;
 
 pub struct Viewport {
+    dimensions : [u32; 2],
     pub renderer : RayTracer,
     pub scene : Arc<RwLock<Scene>>,
-    pub camera : Arc<RwLock<PinholeCamera>>
+    pub camera : Arc<RwLock<PinholeCamera>>,
 }
 
 impl Viewport {
+
+
+    pub fn set_dimensions(&mut self, width : u32, height : u32) {
+        self.dimensions = [width, height];
+        if self.renderer.get_current_size() != self.dimensions {
+            self.renderer.update(width, height);
+        }
+    }
+
+    pub fn prepare_buffer(&mut self) {
+        let mut scene = self.scene.write().unwrap();
+        match &scene.bvh {
+            Some(_) => (),
+            None => {
+                println!("Building BVH");
+                let bvh = BVH::build(&scene);
+                println!("Building BVH done!!");
+
+                scene.bvh = Some(bvh);
+            }
+        }
+        drop(scene);
+        self.renderer.render(&self.scene);
+    }
+
+    pub fn get_buffer(&mut self) -> &[u32] {
+        self.renderer.get_output()
+    }
+
     pub fn draw_scene_setting_window(&mut self, ui : &Ui, viewport_size: &[f32; 2]) {
-        // /*
         let mut update = false;
         if let Ok(mut scene) = self.scene.try_write() {
 
@@ -71,18 +104,29 @@ impl Viewport {
                 }
 
                 if ui.button("Add Materal") {
-                    let material = Matrial::default();
+                    let material = Material::default();
                     scene.materials.push(material);
                     update |= true;
                 }
 
                 update |= ui.color_edit3("Sky color", &mut scene.default_sky_color);
+
+                if ui.button("Get Camera Setting") {
+                        let cam = self.camera.read().unwrap();
+                        println!("Camera:");
+                        println!("\tposition : {:?}", cam.position);
+                        println!("\trotation : {:?}", cam.rotation);
+                        println!("\timage_size : {:?}", cam.image_size);
+                        println!("\tfocallength : {:?}", cam.focal_length);
+                        println!("\tsensorsize : {:?}", cam.sensor_size);
+                        drop(cam);
+                    }
             });
         drop(scene);
         
 
         if update {
-            self.renderer.render_updated(&self.scene,
+            self.renderer.update(
                 viewport_size[0] as u32,
                 viewport_size[1] as u32,
             );
@@ -155,8 +199,7 @@ impl Viewport {
         }
 
         if moved {
-            self.renderer
-                .render_updated(&self.scene, width, height);
+            self.renderer.update(width, height);
         }
 
     }
@@ -166,15 +209,18 @@ impl Viewport {
 
 impl Default for Viewport {
     fn default() -> Self {
-        let position =Vec3::new(0.0, 0.0, 2.0);
-        let camera =  Arc::new(RwLock::new(
-            PinholeCamera::new(
+        let position = Vec3::new(9.5, 2.25, 0.0);
+        let rotation = Vec3::new(0.0, PI/2.0, 0.0);
+        let mut cam = PinholeCamera::new(
                 position, 
                 Vec3::ZERO,
-                35.0,
                 55.0,
+                35.0,
                 [0,0]
-            )
+            );
+        cam.set_rotation(rotation);
+        let camera =  Arc::new(RwLock::new(
+            cam
         ));
 
         let mut renderer = RayTracer::new(0, 0);
@@ -182,9 +228,10 @@ impl Default for Viewport {
         let scene = Arc::new(RwLock::new(Scene::get_example_scene()));
 
         Self {
+            dimensions: [0,0],
             camera,
             renderer,
-            scene
+            scene,
         }
     }
 }

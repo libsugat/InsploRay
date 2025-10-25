@@ -6,22 +6,20 @@ _InsploRay: Inspire(inspiration) + Explore(Exploration) + Ray Tracing_
 
 The primary goal of writing a path tracer was to get a head start before getting into low level systems programming, which now grew into a project of its own. It’s being designed with modularity in mind.
 
-## 🖥️ Demo
-
-![image](https://private-user-images.githubusercontent.com/79888221/479675877-1c3e619e-d447-460c-8f36-a5c4c889cb09.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTU2MzEwMTAsIm5iZiI6MTc1NTYzMDcxMCwicGF0aCI6Ii83OTg4ODIyMS80Nzk2NzU4NzctMWMzZTYxOWUtZDQ0Ny00NjBjLThmMzYtYTVjNGM4ODljYjA5LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MTklMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODE5VDE5MTE1MFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTllZGIxNGM1YTc0MzgxMGM2ZjEyNDdmMzM5YTY1ZmQ4ODVlNTE1ZDhjZDdmOTRlMTliNmExOWZmYTIwODY5MGMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.ODAF9zOcaYGIeOgWQUmry1TS6KN97DgbPejEvyiLCz4)
-
 ## 🧩 Current Features:
-- Ray sphere intersection _(Only)_
+- Ray sphere intersection
+- Ray Triangle Intersection _(slower algorithm)_
 - Lambertian Diffuse _(Only)_
 - EXR skybox support _(for HDR environment lighting and background)_
 - Multithreaded
 - Simulate a PinHole Camera
 - Very Basic material system 
     - Albedo
-    - Roughness _(planned, not yet implemented)_
-    - Metalic _(planned, not yet implemented)_
     - Emissive Color
     - Emissive Strength
+    - Roughness _(planned, not yet implemented)_
+    - Metalic _(planned, not yet implemented)_
+- BVH (Binned SAH building)
 - Basic Tone Mapping
 - More under way✨...
 
@@ -95,14 +93,16 @@ Feel free to ask questions, suggest changes, or just explore the code!
 - [ ] Imgui does not remember the window layout, it's a know issue with imgui-rs crate (Frontend)
 
 ## 🔜 My Side Plans
-Order unknown because I am gonna join BTech soon within couple of days....
-- [ ] Ray Triangle Intersection
+Order unknown because I am BTech student unable to manage my time corrently....
+- [x] Ray Triangle Intersection
+- [x] Loading Scene (.obj`)
+- [ ] Loading Scene (`.glb`/`.gltf`)
 - [ ] Specular BRDF
 - [ ] Metallic BRDF
 - [ ] Better Scene Representation in memory
-- [ ] Loading Scene (`.glb`/`.gltf`/`.obj`)
 - [ ] Save Image (`EXR` and/or `PNG`)
 - [ ] MIS (Multiple Importance Sampling) in Primary (or currently only) Integrator
+- [x] BVH (Binned SAH)
 
 ## License
 

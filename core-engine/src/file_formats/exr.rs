@@ -11,7 +11,7 @@ pub struct ExrImage {
 
 impl ExrImage {
     pub fn sample(&self, dir: Vec3) -> Vec3 {
-        let dir = dir.normalize();
+        // let dir = dir.normalize();
         let theta = dir.y.clamp(-1.0, 1.0).acos();
         let phi = dir.z.atan2(dir.x);
         let u = (phi + std::f32::consts::PI) / (2.0 * std::f32::consts::PI);

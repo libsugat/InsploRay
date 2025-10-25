@@ -1,4 +1,4 @@
-use glam::{Vec4, usize};
+use glam::{Vec4};
 
 use super::tile_buffer::TileAccumulator;
 use crate::utils::convert_to_argb;
@@ -7,6 +7,7 @@ use crate::utils::convert_to_argb;
 pub struct Accumulator {
     width: u32,
     height: u32,
+
     framebuffer: Vec<Vec4>,
     sample_counts: Vec<u32>,
 }
@@ -23,6 +24,7 @@ impl Accumulator {
         }
     }
 
+    #[inline]
     pub fn get_resolution(&self) -> [u32; 2] {
         [self.width, self.height]
     }
@@ -103,7 +105,6 @@ impl Accumulator {
         });
     }
 
-    // TODO: Clean the typecasting in the function
     pub fn merge_tile(&mut self, tile: TileAccumulator) {
         for ty in 0..tile.height {
             for tx in 0..tile.width {

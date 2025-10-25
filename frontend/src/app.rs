@@ -19,7 +19,6 @@ pub struct App {
     // viewport_renderer: RayTracer,
 
     viewport : Viewport,
-    first_buffer : bool
 }
 
 impl App {
@@ -80,18 +79,15 @@ impl App {
                         );
                     }
 
-                    // if !self.first_buffer {
-                        self.viewport.renderer
-                            .prepare_pixels(&self.viewport.scene, width, height);
-                        self.first_buffer = true;
-
-                    // }
+                    self.viewport.set_dimensions(width, height);
+                    self.viewport
+                        .prepare_buffer();
 
                     let [c_w, c_h] = self.viewport.renderer.get_current_size();
 
                     let dimensions = self.viewport.renderer.get_current_size();
                     let texture_id = create_texture_from_pixels(
-                        self.viewport.renderer.get_output(),
+                        self.viewport.get_buffer(),
                         dimensions,
                         &window.device,
                         &window.queue,
@@ -113,15 +109,12 @@ impl App {
                 .position([500.0, 200.0], imgui::Condition::FirstUseEver)
                 .build(|| {
                     let duration = self.viewport.renderer.get_last_render_time();
+
+                    let mut updated = false;
                     ui.text(format!("Last Render : {duration:?}"));
                     ui.text(format!("Image : {viewport_size:?}"));
                     ui.button("Render").then(|| {
-                        self.viewport.renderer
-                            .render(&self.viewport.scene,
-                                viewport_size[0] as u32,
-                                viewport_size[1] as u32,
-                                false
-                            );
+                        updated |= true;
                     });
 
                     let camera = self.viewport.camera.read().unwrap();
@@ -133,20 +126,22 @@ impl App {
                         .build(ui, &mut focal_length) && focal_length > 0.0  {
                         self.viewport.camera.write().unwrap()
                             .set_focal_length(focal_length);
-                        self.viewport.renderer.render_updated(&self.viewport.scene,
-                            viewport_size[0] as u32,
-                            viewport_size[1] as u32,
-                        );
+                        updated |= true;
                     }
 
                     if imgui::Drag::new("Sensor Size")
                         .build(ui, &mut sensor_size) && sensor_size > 0.0 {
                         self.viewport.camera.write().unwrap()
                             .set_sensor_size(sensor_size);
-                        self.viewport.renderer.render_updated(&self.viewport.scene,
-                            viewport_size[0] as u32,
-                            viewport_size[1] as u32,
-                        );
+                        updated |= true;
+                    }
+                    
+                    if updated {
+                        self.viewport.renderer
+                            .update(
+                                viewport_size[0] as u32,
+                                viewport_size[1] as u32,
+                            );
                     }
                 });
             

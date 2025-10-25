@@ -5,6 +5,7 @@ pub struct TileAccumulator {
     pub offset_y: u32,
     pub width: u32,
     pub height: u32,
+
     pub framebuffer: Vec<Vec4>,
     pub sample_counts: Vec<u32>,
 }

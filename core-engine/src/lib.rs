@@ -8,7 +8,10 @@ pub(crate) mod utils;
 pub mod file_formats;
 pub mod cameras;
 pub mod renderer;
+pub mod materials;
+pub mod geometry;
 pub mod scene;
+pub mod acceleration_structure;
 
 use ray::Ray;
 

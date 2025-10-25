@@ -22,7 +22,6 @@ pub struct RayTracer {
     accumulator: Arc<RwLock<Accumulator>>,
     threadpool: Option<Threadpool>,
     threadpool_result_rx: Option<Receiver<TileAccumulator>>,
-    // merger_thread: Option<JoinHandle<()>>,
 }
 
 impl RayTracer {
@@ -67,15 +66,9 @@ impl RayTracer {
     }
 
     #[inline]
-    pub fn prepare_pixels(&mut self, scene: &Arc<RwLock<Scene>>, width: u32, height: u32) {
-        self.render(scene, width, height, true);
+    pub fn prepare_pixels(&mut self, scene: &Arc<RwLock<Scene>>) {
+        self.render(scene);
     }
-
-    #[inline]
-    pub fn render_updated(&mut self, scene: &Arc<RwLock<Scene>>, width: u32, height: u32) {
-        self.render(scene, width, height, false);
-    }
-
 
     fn set_size(&mut self, size: [u32; 2]) {
         self.width = size[0];
@@ -92,60 +85,60 @@ impl RayTracer {
         drop(cam);
     }
 
-    pub fn render(&mut self, scene: &Arc<RwLock<Scene>>, width: u32, height: u32, acc: bool) {
+    fn dispatch_tile_render_job(
+        &mut self,
+        scene: &Arc<RwLock<Scene>>,
+        tile_size: u32,
+        tile_x: u32,
+        tile_y: u32,
+    ) -> bool {
+        let tp = match &mut self.threadpool {
+            Some(threadpool) => threadpool,
+            None => {
+                return false;
+            }
+        };
+
+        let mut integrator = self.integrator.clone();
+        let camera = Arc::clone(&self.active_camera);
+        let local_scene = Arc::clone(scene);
+
+        // Compute tile bounds
+        let tile_width = (tile_size).min(self.width - tile_x);
+        let tile_height = (tile_size).min(self.height - tile_y);
+
+        tp.execute(move |sampler| {
+            let scene_guard = local_scene.read().unwrap();
+            let mut accumulator = TileAccumulator::new(tile_x, tile_y, tile_width, tile_height);
+
+            for dy in 0..tile_height {
+                for dx in 0..tile_width {
+                    let x = tile_x + dx;
+                    let y = tile_y + dy;
+
+                    let color =
+                        integrator.compute_incomming_radience(&scene_guard, x, y, &camera, sampler);
+
+                    accumulator.accumulate(dx as u32, dy as u32, color);
+                }
+            }
+
+            accumulator
+        });
+
+        true
+    }
+
+    pub fn render(&mut self, scene: &Arc<RwLock<Scene>>) {
         let render_start_time = Instant::now();
 
-        self.set_size([width, height]);
-        if !acc {
-            let mut accum_guard = self.accumulator.write().unwrap();
-            *accum_guard = Accumulator::new(width, height);
-            drop(accum_guard);
-        }
-
         let tile_size = 64;
-
         let mut jobs_dispached = 0;
-        // init thread local accumulator
-        for tile_y in (0..height).step_by(tile_size as usize) {
-            for tile_x in (0..width).step_by(tile_size as usize) {
-                match &mut self.threadpool {
-                    Some(tp) => {
-                        let mut integrator = self.integrator.clone();
-                        let camera = Arc::clone(&self.active_camera);
-                        let local_scene = Arc::clone(scene);
 
-                        // Compute tile bounds
-                        let tile_width = (tile_size).min(width - tile_x);
-                        let tile_height = (tile_size).min(height - tile_y);
-
-                        tp.execute(move |sampler| {
-                            let scene_guard = local_scene.read().unwrap();
-                            let mut accumulator =
-                                TileAccumulator::new(tile_x, tile_y, tile_width, tile_height);
-
-                            for dy in 0..tile_height {
-                                for dx in 0..tile_width {
-                                    let x = tile_x + dx;
-                                    let y = tile_y + dy;
-
-                                    let color = integrator.compute_incomming_radience(
-                                        &scene_guard,
-                                        x,
-                                        y,
-                                        &camera,
-                                        sampler,
-                                    );
-
-                                    accumulator.accumulate(dx as u32, dy as u32, color);
-                                }
-                            }
-
-                            accumulator
-                        });
-                        jobs_dispached += 1;
-                    }
-                    None => (),
-                }
+        for tile_y in (0..self.height).step_by(tile_size as usize) {
+            for tile_x in (0..self.width).step_by(tile_size as usize) {
+                jobs_dispached +=
+                    self.dispatch_tile_render_job(scene, tile_size, tile_x, tile_y) as u32;
             }
         }
 
@@ -159,6 +152,12 @@ impl RayTracer {
         }
 
         self.last_render_time = render_start_time.elapsed();
+    }
+
+    pub fn update(&mut self, width: u32, height: u32) {
+        self.set_size([width, height]);
+        let mut accum_guard = self.accumulator.write().unwrap();
+        *accum_guard = Accumulator::new(width, height);
     }
 
     pub fn get_output(&mut self) -> &[u32] {
