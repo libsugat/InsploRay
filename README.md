@@ -15,10 +15,11 @@ The primary goal of writing a path tracer was to get a head start before getting
 - Simulate a PinHole Camera
 - Very Basic material system 
     - Albedo
-    - Roughness _(planned, not yet implemented)_
-    - Metalic _(planned, not yet implemented)_
     - Emissive Color
     - Emissive Strength
+    - Roughness _(planned, not yet implemented)_
+    - Metalic _(planned, not yet implemented)_
+- BVH (Binned SAH building)
 - Basic Tone Mapping
 - More under way✨...
 
@@ -101,6 +102,7 @@ Order unknown because I am BTech student unable to manage my time corrently....
 - [ ] Better Scene Representation in memory
 - [ ] Save Image (`EXR` and/or `PNG`)
 - [ ] MIS (Multiple Importance Sampling) in Primary (or currently only) Integrator
+- [x] BVH (Binned SAH)
 
 ## License
 
