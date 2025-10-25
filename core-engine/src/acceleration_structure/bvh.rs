@@ -13,6 +13,7 @@ use crate::Vec3;
 const MAX_PRIMS_IN_NODE: usize = 4;
 const BIN_COUNT: usize = 12;
 
+#[derive(Debug)]
 pub enum BVHNode {
     Internal {
         bounds: AABB,
@@ -45,23 +46,23 @@ impl AccelerationStructure for BVHNode {
                     return None;
                 }
 
+                let mut hit_distance = f32::MAX;
                 let mut closest_hit: Option<HitPayload> = None;
 
-                for prim in primitives {
-                    if let Some(hit) = prim.intersect_ray(ray) {
-                        let replace = match &closest_hit {
-                            Some(prev_hit) => hit.hit_distance < prev_hit.hit_distance,
-                            None => true,
-                        };
-                        if replace {
-                            closest_hit = Some(hit);
+                for prim in primitives.iter() {
+                    if let Some(payload) = prim.intersect_ray(ray) {
+                        if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
+                            hit_distance = payload.hit_distance;
+                            closest_hit = Some(payload);
                         }
                     }
+                    else {
+                        continue;
+                    }
                 }
-
+                
                 closest_hit
             },
-
             BVHNode::Internal { bounds, left, right } => {
                 if !bounds.intersect(ray) {
                     return None;

@@ -4,8 +4,6 @@ use std::time::{Duration, Instant};
 use crossbeam::channel::Receiver;
 use glam::Vec3;
 
-use crate::acceleration_structure::bvh::BVHNode;
-use crate::acceleration_structure::BVH;
 use crate::accumulators::{Accumulator, TileAccumulator};
 use crate::cameras::{PinholeCamera, SharedCamera};
 use crate::concurrency::Threadpool;

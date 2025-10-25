@@ -1,6 +1,6 @@
 use glam::{Vec3, Vec4};
 
-use crate::acceleration_structure::{AccelerationStructure, BVH};
+use crate::acceleration_structure::AccelerationStructure;
 use crate::Ray;
 use crate::cameras::SharedCamera;
 use crate::sampler::Sampler;
@@ -112,18 +112,6 @@ impl Integrator {
                 }
             }
         }
-
-        // for (_i, mesh) in scene.meshes.iter().enumerate() {
-        //     if let Some(payload) = mesh.intersect_ray(ray) {
-        //         if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
-        //             hit_distance = payload.hit_distance;
-        //             closest_hit = payload;
-        //         }
-        //     }
-        //     else {
-        //         continue;
-        //     }
-        // }
 
         return closest_hit;
     }
