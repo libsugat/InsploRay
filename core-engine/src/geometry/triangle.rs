@@ -21,50 +21,46 @@ impl Triangle {
     }
 }
 
-// this is using egde cross the vector from test vertex to hit point
 impl Geometry for Triangle {
     fn intersect_ray(&self, ray :&Ray) -> Option<HitPayload> {
-        let normal = self.normal;
-        let denom = self.normal.dot(ray.direction);
+        let e1 = self.v1 - self.v0;
+        let e2 = self.v2 - self.v0;
+        
+        let p = ray.direction.cross(e2);
 
-        if denom.abs() < f32::EPSILON {
+        let det = e1.dot(p);
+
+        if det.abs() < 1e-8 {
             return None;
         }
 
-        let num = normal.dot(self.v0 - ray.origin);
-        let t = num / denom;
+        let inv_det = 1.0/det.abs();
+        let t_vec= ray.origin - self.v0;
+        let u = inv_det * t_vec.dot(p);
 
-        let facing_normal = if denom < 0.0 {
-            normal
+        if u < 0.0 || u > 1.0 {
+            return None;
         }
-        else {
-            -normal
+        
+        let q_vec = t_vec.cross(e1);
+        let v = inv_det * ray.direction.dot(q_vec);
+        
+        if v < 0.0 || u + v > 1.0 {
+            return None;
+        }
+
+        let t = inv_det * e2.dot(q_vec);
+
+        if t < 0.0 {
+            return None;
+        }
+
+        // let n = if ray.direction.dot(self.normal) > 0.0 {
+        let n = if det < 0.0 {
+            -self.normal // flip normal to face opposite the ray
+        } else {
+            self.normal
         };
-
-        let phit = ray.origin + t * ray.direction;
-
-        let edges = [
-            (&self.v0, &self.v1, &self.v2), // for alpha
-            (&self.v1, &self.v2, &self.v0), // for beta
-            (&self.v2, &self.v0, &self.v1), // for gamma
-        ];
-
-        let mut barycentric_coords = [0.0; 3];
-
-        for (i, (v_from, v_to, v_other)) in edges.into_iter().enumerate() {
-            let edge = v_to - v_from;
-            let to_phit = phit - v_from;
-            let cross = edge.cross(to_phit);
-
-            if self.normal.dot(cross) < 0.0 {
-                return None;
-            }
-
-            let full_area = edge.cross(v_other - v_from).length();
-            barycentric_coords[i] = cross.length() / full_area;
-        }
-
-        let [u,v, _w] = barycentric_coords;
 
         let material = if self.material_id < 0 {
             None
@@ -73,12 +69,11 @@ impl Geometry for Triangle {
             Some(self.material_id as usize)
         };
 
-
         Some(
             HitPayload {
                 hit_distance: t,
-                world_position : phit,
-                world_normal: facing_normal,
+                world_position : ray.origin + t * ray.direction,
+                world_normal: n,
                 material_index: material,
 
                 uv : Some(Vec2::new(u, v)),

@@ -20,7 +20,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn get_example_scene() -> Self {
-        let exr_img = ExrImage::load_exr_image("./assets/env/moon_lab_1k.exr");
+        let exr_img = ExrImage::load_exr_image("./assets/env/docklands_02_1k_.exr");
         if let Err(e) = &exr_img {
             println!(
                 "Current working directory: {}",
@@ -39,7 +39,7 @@ impl Scene {
         };
 
         println!("trying loading .obj");
-        match obj_loader::load_from_file("./assets/models/test_scene.obj") {
+        match obj_loader::load_from_file("./assets/models/test_scene2.obj") {
         // match obj_loader::load_from_file("./assets/models/cornell_box_only_box.obj") {
             Ok((meshes, materials)) => {
                 scene.meshes = meshes;
@@ -50,7 +50,6 @@ impl Scene {
                 println!("error loading .obj");
             }
         }
-
 
         {
             let material = Material {
@@ -77,3 +76,4 @@ impl Scene {
 }
 
 pub mod obj_loader;
+pub mod gltf_loader;
