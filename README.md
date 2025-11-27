@@ -8,7 +8,7 @@ The primary goal of writing a path tracer was to get a head start before getting
 
 ## 🧩 Current Features:
 - Ray sphere intersection
-- Ray Triangle Intersection _(slower algorithm)_
+- Ray Triangle Intersection _(Möller–Trumbore algorithm)_
 - Lambertian Diffuse _(Only)_
 - EXR skybox support _(for HDR environment lighting and background)_
 - Multithreaded
