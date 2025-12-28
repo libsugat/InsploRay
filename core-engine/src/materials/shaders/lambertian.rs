@@ -1,7 +1,6 @@
 use glam::Vec3;
 
 use crate::geometry::HitPayload;
-use crate::ray::Ray;
 use crate::sampler::Sampler;
 
 use super::BxDF;
@@ -9,15 +8,12 @@ use super::BxDF;
 
 pub struct Lambertian {
     pub albedo: Vec3,
-    pub roughness: f32,
-    pub metalic: f32,
-
     pub emission_color: Vec3,
     pub emissive_power: f32,
 }
 
 impl BxDF for Lambertian {
-    fn sample_direction(&self, _ray: &Ray, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3 {
+    fn sample_direction(&self, _wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3 {
         let normal = hit_record.world_normal;
 
         sampler.sample_hemisphere_cosine_weighted(normal).normalize()
@@ -42,9 +38,6 @@ impl Default for Lambertian {
     fn default() -> Self {
         Self {
             albedo: Vec3::ONE,
-            roughness: 0.5,
-            metalic: 0.0,
-
             emission_color: Vec3::ZERO,
             emissive_power: 0.0,
         }

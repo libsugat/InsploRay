@@ -13,7 +13,7 @@ pub struct ScatterRecord {
 }
 
 pub trait BxDF {
-    fn sample_direction(&self, ray: &Ray, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3;
+    fn sample_direction(&self, wo:Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3;
     fn eval(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> Vec3;
     fn pdf(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> f32;
 
@@ -39,7 +39,7 @@ impl Material {
                 selection_pdf: 1.0
             };
         }
-        let wo = ray.direction;
+        let wo = -ray.direction;
 
         let weight_sum: f32 = self.weights.iter().sum();
         let random_num = sampler.next_f32() * weight_sum;
@@ -48,7 +48,7 @@ impl Material {
         for i in 0..self.shaders.len() {
         sum += self.weights[i];
             if random_num < sum {
-                let wi = self.shaders[i].sample_direction(ray, hit_record, sampler);
+                let wi = self.shaders[i].sample_direction(wo, hit_record, sampler);
                 let f = self.shaders[i].eval(wi, wo, hit_record);
                 let pdf = self.shaders[i].pdf(wi, wo, hit_record);
                 let emission = self.shaders[i].emission(hit_record);
@@ -69,7 +69,7 @@ impl Material {
         let last = self.shaders.len() - 1;
         let bxdf = &self.shaders[last];
 
-        let wi = bxdf.sample_direction(ray, hit_record, sampler);
+        let wi = bxdf.sample_direction(wo, hit_record, sampler);
         let f = bxdf.eval(wo, wi, hit_record);
         let pdf = bxdf.pdf(wo, wi, hit_record);
         let selection_pdf = self.weights[last] / weight_sum;
@@ -87,4 +87,5 @@ impl Material {
 pub mod shaders;
 
 pub use shaders::lambertian::Lambertian;
-pub use shaders::metal::Metal;
+pub use shaders::metal::IdealMirror;
+pub use shaders::ggx_metal::GGXMetal;

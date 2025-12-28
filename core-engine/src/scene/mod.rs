@@ -6,7 +6,8 @@ use crate::acceleration_structure::BVH;
 use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
-use crate::materials::{Lambertian, Material, Metal};
+use crate::materials::shaders::ggx_metal::GGXMetal;
+use crate::materials::{Lambertian, Material};
 
 #[derive(Default)]
 pub struct Scene {
@@ -54,12 +55,12 @@ impl Scene {
         }
 
         {
-            let metal_brdf = Metal {
-                albedo: Vec3::new(0.831, 0.686, 0.216),
+            let metal_brdf = GGXMetal {
+                base_color: Vec3::new(0.831, 0.686, 0.216),
                 ..Default::default()
             };
 
-            let lambertian_brdf = Lambertian {
+            let _lambertian_brdf = Lambertian {
                 albedo: Vec3::new(0.2, 0.2, 0.2), // tweak as desired
                 ..Default::default()
             };
@@ -68,9 +69,10 @@ impl Scene {
             scene.materials.push(Arc::new(Material {
                 shaders: vec![
                     Arc::new(metal_brdf),
-                    Arc::new(lambertian_brdf),
+                    // Arc::new(lambertian_brdf),
                 ],
-                weights: vec![0.1, 0.9], // metal-dominant mix
+                // weights: vec![0.5, 0.5], // metal-dominant mix
+                weights: vec![1.0], // metal-dominant mix
             }));
 
             let sphere_1 = Sphere {

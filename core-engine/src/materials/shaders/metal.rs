@@ -1,24 +1,23 @@
 use glam::Vec3;
 
 use crate::geometry::HitPayload;
-use crate::ray::Ray;
 use crate::sampler::Sampler;
 
 use super::BxDF;
 
-pub struct Metal {
-    pub albedo: Vec3,
+pub struct IdealMirror {
+    pub base_color: Vec3,
 }
 
-impl BxDF for Metal {
-    fn sample_direction(&self, ray: &Ray, hit_record: &HitPayload, _sampler: &mut Sampler) -> Vec3 {
-        ray.direction.reflect(hit_record.world_normal)
+impl BxDF for IdealMirror {
+    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, _sampler: &mut Sampler) -> Vec3 {
+        (-wo).reflect(hit_record.world_normal)
     }
 
     fn eval(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> Vec3 {
         let normal = hit_record.world_normal;
         if (wi - wo.reflect(normal)).length() < 1e-6 {
-            self.albedo
+            self.base_color
         }
         else {
             Vec3::ZERO
@@ -36,10 +35,10 @@ impl BxDF for Metal {
     }
 }
 
-impl Default for Metal {
+impl Default for IdealMirror {
     fn default() -> Self {
         Self {
-            albedo: Vec3::ONE,
+            base_color: Vec3::ONE,
         }
     }
 }

@@ -1,24 +1,12 @@
 use glam::{Vec2, Vec3};
 use rand::{Rng, prelude::ThreadRng};
 
+use crate::utils::transform_local_to_world;
+
 pub struct Sampler {
     rng: ThreadRng,
 }
 
-fn transform_local_to_world(local_dir: Vec3, normal: Vec3) -> Vec3 {
-    let normal = normal.normalize();
-
-    let a = if normal.x.abs() > 0.99 {
-        Vec3::new(0.0, 1.0, 0.0)
-    } else {
-        Vec3::new(1.0, 0.0, 0.0)
-    };
-
-    let tangent = normal.cross(a).normalize();
-    let bitangent = tangent.cross(normal).normalize();
-
-    tangent * local_dir.x + bitangent * local_dir.y + normal * local_dir.z
-}
 
 impl Sampler {
     pub fn new() -> Self {

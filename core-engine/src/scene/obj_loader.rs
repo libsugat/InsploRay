@@ -80,13 +80,13 @@ fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
                 Vec3::from_array(diffuse)
             }
         },
-        roughness: match mat.shininess {
-            None => 0.0,
-            Some(shininess) => {
-                1.0 - shininess.min(1000.0) / 1000.0 // convert specular exponent to roughness
-            }
-        },
-        metalic: mat.illumination_model.unwrap_or(0) as f32 / 10.0, // crude approximation
+        // roughness: match mat.shininess {
+        //     None => 0.0,
+        //     Some(shininess) => {
+        //         1.0 - shininess.min(1000.0) / 1000.0 // convert specular exponent to roughness
+        //     }
+        // },
+        // metalic: mat.illumination_model.unwrap_or(0) as f32 / 10.0, // crude approximation
         emission_color: Vec3::ZERO,
         emissive_power: 0.0, // max component as power
     };
