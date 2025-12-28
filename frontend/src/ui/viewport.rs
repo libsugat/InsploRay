@@ -7,8 +7,6 @@ use imgui::Ui;
 use insploray::acceleration_structure::AccelerationStructure;
 use insploray::acceleration_structure::BVH;
 use insploray::renderer::RayTracer;
-use insploray::materials::Material;
-use insploray::geometry::Sphere;
 use insploray::scene::Scene;
 use insploray::cameras::Camera;
 use insploray::cameras::PinholeCamera;
@@ -74,40 +72,17 @@ impl Viewport {
                     ui.separator();
                 }
 
-                if ui.button("Add sphere") {
-                    let sphere = Sphere{
-                        position : Vec3::ZERO,
-                        radius : 1.0,
-                        material_id : -1, 
-                    };
-                    scene.spheres.push(sphere);
-                    update |= true;
-                }
+                // if ui.button("Add sphere") {
+                //     let sphere = Sphere{
+                //         position : Vec3::ZERO,
+                //         radius : 1.0,
+                //         material_id : -1, 
+                //     };
+                //     scene.spheres.push(sphere);
+                //     update |= true;
+                // }
+                // ui.separator();
                 ui.separator();
-                ui.separator();
-
-                for i in 0..scene.materials.len() {
-                    let _id = ui.push_id_usize(i);
-
-                    update |= ui.color_edit3("Albedo", &mut scene.materials[i].albedo);
-                    update |= imgui::Drag::new("Roughness").range(0.0, 1.0)
-                        .speed(0.005)
-                        .build(ui, &mut scene.materials[i].roughness);
-                    update |= imgui::Drag::new("Metalic").range(0.0, 1.0)
-                        .speed(0.005)
-                        .build(ui, &mut scene.materials[i].metalic);
-                    update |= ui.color_edit3("Emission Color", &mut scene.materials[i].emission_color);
-                    update |= imgui::Drag::new("Emissive Power").range(0.0, 1.0)
-                        .build(ui, &mut scene.materials[i].emissive_power);
-
-                    ui.separator();
-                }
-
-                if ui.button("Add Materal") {
-                    let material = Material::default();
-                    scene.materials.push(material);
-                    update |= true;
-                }
 
                 update |= ui.color_edit3("Sky color", &mut scene.default_sky_color);
 

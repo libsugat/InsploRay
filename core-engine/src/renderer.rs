@@ -35,7 +35,7 @@ impl RayTracer {
         );
 
         let integrator = Integrator {
-            bounces: 5,
+            bounces: 10,
             max_compulsory_bounces: 2,
         };
         let accumulator = Accumulator::new(width, height);

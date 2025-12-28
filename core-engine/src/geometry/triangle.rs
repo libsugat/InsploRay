@@ -29,38 +29,24 @@ impl Geometry for Triangle {
         let p = ray.direction.cross(e2);
 
         let det = e1.dot(p);
+        if det.abs() < 1e-4 { return None; }
+        let inv_det = 1.0 / det;
 
-        if det.abs() < 1e-8 {
-            return None;
-        }
+        let t_vec = ray.origin - self.v0;
+        let u = t_vec.dot(p) * inv_det;
+        if u < 0.0 || u > 1.0 { return None; }
 
-        let inv_det = 1.0/det.abs();
-        let t_vec= ray.origin - self.v0;
-        let u = inv_det * t_vec.dot(p);
-
-        if u < 0.0 || u > 1.0 {
-            return None;
-        }
-        
         let q_vec = t_vec.cross(e1);
-        let v = inv_det * ray.direction.dot(q_vec);
-        
-        if v < 0.0 || u + v > 1.0 {
-            return None;
+        let v = ray.direction.dot(q_vec) * inv_det;
+        if v < 0.0 || u + v > 1.0 { return None; }
+
+        let t = e2.dot(q_vec) * inv_det;
+        if t < 1e-4 { return None; }
+
+        let mut n = self.normal;
+        if n.dot(-ray.direction) < 0.0 {
+            n = -n;
         }
-
-        let t = inv_det * e2.dot(q_vec);
-
-        if t < 0.0 {
-            return None;
-        }
-
-        // let n = if ray.direction.dot(self.normal) > 0.0 {
-        let n = if det < 0.0 {
-            -self.normal // flip normal to face opposite the ray
-        } else {
-            self.normal
-        };
 
         let material = if self.material_id < 0 {
             None

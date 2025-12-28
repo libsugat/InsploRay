@@ -52,15 +52,31 @@ impl Accumulator {
         let color = self.framebuffer[index];
         let samples = self.sample_counts[index].max(1);
 
-        let mut averaged = color / samples as f32;
+        // let mut averaged = color / samples as f32;
 
-        // Tone mapping (Reinhard)
-        averaged = averaged / (averaged + Vec4::ONE);
+        // // Tone mapping (Reinhard)
+        // averaged = averaged / (averaged + Vec4::ONE);
 
-        // Gamma correction
-        averaged = averaged.powf(1.0 / 2.2);
+        // // Gamma correction
+        // averaged = averaged.powf(1.0 / 2.2);
 
         // Clamp to [0, 1]
+        // averaged = averaged.clamp(Vec4::ZERO, Vec4::ONE);
+
+        let mut averaged = color / samples as f32;
+        // exposure
+        // averaged *= exposure;
+
+        // tone mapping (simple Reinhard, luminance-based)
+        let lum = averaged.dot(Vec4::from([0.2126, 0.7152, 0.0722, 0.0]));
+        let mapped = lum / (1.0 + lum);
+        averaged *= mapped / lum.max(1e-6);
+
+        // gamma
+        averaged = averaged.powf(1.0 / 2.2);
+        averaged.w = 1.0;
+
+        // clamp
         averaged = averaged.clamp(Vec4::ZERO, Vec4::ONE);
 
         convert_to_argb(&averaged)

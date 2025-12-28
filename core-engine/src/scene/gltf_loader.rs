@@ -1,7 +1,9 @@
-use crate::geometry::Mesh;
-use crate::materials::Material;
+use std::sync::Arc;
 
-pub fn load_from_file(_path: &str) ->Result<(Vec<Mesh>, Vec<Material>), Box<dyn std::error::Error>> {
+use crate::geometry::Mesh;
+use crate::materials::BxDF;
+
+pub fn load_from_file(_path: &str) ->Result<(Vec<Mesh>, Vec<Arc<dyn BxDF>>), Box<dyn std::error::Error>> {
     todo!()
 }
 
