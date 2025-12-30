@@ -14,13 +14,14 @@ pub struct GGXMetal {
 }
 
 impl BxDF for GGXMetal {
-    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3 {
+    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3) {
         let r1 = sampler.next_f32();
         let r2 = sampler.next_f32();
 
         let alpha = self.roughness * self.roughness;
+        let alpha2 = (alpha * alpha).max(0.0001);
 
-        let cos_theta = ((1.0 - r1) / (1.0 + (alpha * alpha - 1.0) * r1)).sqrt();
+        let cos_theta = ((1.0 - r1) / (1.0 + (alpha2 - 1.0) * r1)).sqrt();
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let phi = 2.0 * PI * r2;
 
@@ -33,7 +34,10 @@ impl BxDF for GGXMetal {
 
         let h_world = transform_local_to_world(h_local, hit_record.world_normal).normalize();
 
-        (-wo).reflect(h_world).normalize()
+        (
+            (-wo).reflect(h_world).normalize(),
+            hit_record.world_normal
+        )
     }
 
     fn eval(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> Vec3 {
@@ -65,7 +69,7 @@ impl BxDF for GGXMetal {
 impl GGXMetal {
     fn ndf(&self, h: Vec3, n: Vec3) -> f32 {
         let alpha = self.roughness * self.roughness;
-        let alpha2 = alpha * alpha;
+        let alpha2 = (alpha * alpha).max(0.0001);
         
         let ndoth = n.dot(h).max(0.0);
         let den = ndoth * ndoth * (alpha2 - 1.0) + 1.0;
@@ -78,7 +82,7 @@ impl GGXMetal {
         let ndotw = n.dot(w).max(0.0);
 
         let alpha = self.roughness * self.roughness;
-        let alpha2 = alpha * alpha;
+        let alpha2 = (alpha * alpha).max(0.0001);
 
         let root = (alpha2 + (1.0 - alpha2) * ndotw * ndotw).sqrt();
         (2.0 * ndotw) / (ndotw + root)

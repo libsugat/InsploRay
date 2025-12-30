@@ -13,10 +13,16 @@ pub struct Lambertian {
 }
 
 impl BxDF for Lambertian {
-    fn sample_direction(&self, _wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> Vec3 {
+    fn sample_direction(
+        &self, 
+        _wo: Vec3,
+        hit_record: &HitPayload,
+        sampler: &mut Sampler
+    ) -> (Vec3, Vec3) {
         let normal = hit_record.world_normal;
 
-        sampler.sample_hemisphere_cosine_weighted(normal).normalize()
+        let wi = sampler.sample_hemisphere_cosine_weighted(normal).normalize();
+        (wi, normal)
     }
     
     fn eval(&self, _wi: Vec3, _wo: Vec3, _hit_record: &HitPayload) -> Vec3 {

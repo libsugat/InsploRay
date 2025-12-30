@@ -10,8 +10,11 @@ pub struct IdealMirror {
 }
 
 impl BxDF for IdealMirror {
-    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, _sampler: &mut Sampler) -> Vec3 {
-        (-wo).reflect(hit_record.world_normal)
+    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, _sampler: &mut Sampler) -> (Vec3, Vec3) {
+        (
+            (-wo).reflect(hit_record.world_normal), 
+            hit_record.world_normal
+        )
     }
 
     fn eval(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> Vec3 {

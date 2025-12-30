@@ -56,8 +56,11 @@ impl Integrator {
                 let scatter_data = material.scatter(&ray, &payload, sampler);
 
                 light += scatter_data.emission * contribution;
-                let cos_theta = scatter_data.wi.dot(payload.world_normal).max(0.0);
-                contribution *= scatter_data.f * cos_theta / (scatter_data.pdf * scatter_data.selection_pdf);
+                let cos_theta = scatter_data.wi.dot(scatter_data.shading_normal).max(0.0);
+                contribution *= scatter_data.f / scatter_data.selection_pdf;
+                if !scatter_data.is_delta {
+                    contribution *= cos_theta / scatter_data.pdf;
+                }
 
                 if bounce >= self.max_compulsory_bounces {
                     let p = contribution.x.max(contribution.y.max(contribution.z));
@@ -66,8 +69,8 @@ impl Integrator {
                     }
                     contribution /= p;
                 }
-
-                ray.origin = payload.world_position + payload.world_normal * 1e-4;
+                
+                ray.origin = payload.world_position + scatter_data.shading_normal * 1e-4;
                 ray.direction = scatter_data.wi;
             } else {
                 // sky box, or something

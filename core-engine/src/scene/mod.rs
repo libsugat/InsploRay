@@ -7,7 +7,7 @@ use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::materials::shaders::ggx_metal::GGXMetal;
-use crate::materials::{Lambertian, Material};
+use crate::materials::{DeltaGlass, Lambertian, Material};
 
 #[derive(Default)]
 pub struct Scene {
@@ -55,8 +55,13 @@ impl Scene {
         }
 
         {
-            let metal_brdf = GGXMetal {
+            let delta_glass = DeltaGlass {
+                base_color: Vec3::new(1.0, 0.0, 1.0),
+                ior: 1.45,
+            };
+            let _metal_brdf = GGXMetal {
                 base_color: Vec3::new(0.831, 0.686, 0.216),
+                roughness: 0.02,
                 ..Default::default()
             };
 
@@ -68,7 +73,8 @@ impl Scene {
             let index = scene.materials.len();
             scene.materials.push(Arc::new(Material {
                 shaders: vec![
-                    Arc::new(metal_brdf),
+                    Arc::new(delta_glass),
+                    // Arc::new(metal_brdf),
                     // Arc::new(lambertian_brdf),
                 ],
                 // weights: vec![0.5, 0.5], // metal-dominant mix
