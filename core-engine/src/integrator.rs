@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use glam::{Vec3, Vec4};
 
 use crate::acceleration_structure::AccelerationStructure;
@@ -5,7 +7,7 @@ use crate::Ray;
 use crate::cameras::SharedCamera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
-use crate::materials::Material;
+use crate::materials::{Material, Lambertian};
 
 use crate::geometry::{Geometry, HitPayload};
 
@@ -30,7 +32,10 @@ impl Integrator {
 
         let mut light = Vec3::ZERO;
 
-        let default_material = Material::default();
+        let default_material: Arc<Material> = Arc::new(Material {
+            shaders : vec![Arc::new(Lambertian::default())],
+            weights : vec![1.0]
+        });
         
         let mut contribution = Vec3::ONE;
         for bounce in 0..self.bounces {
@@ -47,15 +52,15 @@ impl Integrator {
                     None => &default_material
                 };
 
-                light += material.emission_color * material.emissive_power * contribution;
 
-                let normal = payload.world_normal;
-                let wi = sampler.sample_hemisphere_cosine_weighted(normal);
-                let cos_theta = wi.dot(normal).max(0.0);
-                let pdf = cos_theta / std::f32::consts::PI;
-                let brdf = material.albedo / std::f32::consts::PI;
+                let scatter_data = material.scatter(&ray, &payload, sampler);
 
-                contribution *= brdf * cos_theta / pdf;
+                light += scatter_data.emission * contribution;
+                let cos_theta = scatter_data.wi.dot(scatter_data.shading_normal).max(0.0);
+                contribution *= scatter_data.f / scatter_data.selection_pdf;
+                if !scatter_data.is_delta {
+                    contribution *= cos_theta / scatter_data.pdf;
+                }
 
                 if bounce >= self.max_compulsory_bounces {
                     let p = contribution.x.max(contribution.y.max(contribution.z));
@@ -64,9 +69,9 @@ impl Integrator {
                     }
                     contribution /= p;
                 }
-
-                ray.origin = payload.world_position + payload.world_normal * f32::EPSILON;
-                ray.direction = wi;
+                
+                ray.origin = payload.world_position + scatter_data.shading_normal * 1e-4;
+                ray.direction = scatter_data.wi;
             } else {
                 // sky box, or something
                 let sky_color = match &scene.skybox {

@@ -27,7 +27,7 @@ pub enum BVHNode {
 }
 
 impl AccelerationStructure for BVHNode {
-    fn build(scene: &Scene) -> Self {
+    fn build(scene: &Scene) -> Option<Self> {
         // Flatten all triangles from all meshes into Geometry objects
         let mut primitives: Vec<Triangle> = Vec::new();
         for mesh in &scene.meshes {
@@ -36,7 +36,27 @@ impl AccelerationStructure for BVHNode {
             }
         }
 
-        BVHNode::build_recursive(primitives)
+        if primitives.len() < MAX_PRIMS_IN_NODE {
+            let first_prim = primitives.first();
+            let mut bounds = match first_prim {
+                None => return None,
+                Some(prim) => {
+                    prim.bounding_box()
+                }
+            };
+            
+            for prim in &primitives {
+                bounds = AABB::union_box(bounds, prim.bounding_box());
+            }
+
+            return Some(
+                Self::Leaf { bounds, primitives }
+            )
+        }
+
+        Some(
+            BVHNode::build_recursive(primitives)
+        )
     }
 
     fn traverse(&self, ray: &Ray) -> Option<HitPayload> {

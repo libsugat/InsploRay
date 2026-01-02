@@ -8,6 +8,7 @@ pub struct HitPayload {
     pub hit_distance: f32,
     pub world_position: Vec3,
     pub world_normal: Vec3,
+    pub back_hit: bool,
 
     pub object_index: Option<usize>,
     pub material_index: Option<usize>,

@@ -35,8 +35,8 @@ impl RayTracer {
         );
 
         let integrator = Integrator {
-            bounces: 5,
-            max_compulsory_bounces: 2,
+            bounces: 10,
+            max_compulsory_bounces: 3,
         };
         let accumulator = Accumulator::new(width, height);
         let shared_acc = Arc::new(RwLock::new(accumulator));

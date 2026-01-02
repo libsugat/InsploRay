@@ -25,33 +25,42 @@ impl Geometry for Sphere {
         }
 
         let sqrt_d = discriminant.sqrt();
-        let t = (-b - sqrt_d) / (2.0 * a);
+        let t0 = (-b - sqrt_d) / (2.0 * a);
+        let t1 = (-b + sqrt_d) / (2.0 * a);
 
-        if t > 0.0 {
-            let hit_point = origin + t * ray.direction;
+        let t = if t0 > 0.0 {
+            t0
+        } else if t1 > 0.0 {
+            t1
+        } else {return None};
 
-            let normal = hit_point.normalize();
+        let hit_point = origin + t * ray.direction;
 
-            let material = if self.material_id < 0 {
-                None
-            }
-            else {
-                Some(self.material_id as usize)
-            };
+        let mut normal = hit_point.normalize();
+        let mut back_hit = false;
 
-            Some(
-                HitPayload {
-                    hit_distance: t,
-                    world_position: hit_point + self.position,
-                    world_normal: normal,
-                    material_index: material,
-                    ..Default::default()
-                }
-            )
+        if normal.dot(-ray.direction) < 0.0 {
+            normal = -normal;
+            back_hit = true;
         }
-        else {
+
+        let material = if self.material_id < 0 {
             None
         }
+        else {
+            Some(self.material_id as usize)
+        };
+
+        Some(
+            HitPayload {
+                hit_distance: t,
+                world_position: hit_point + self.position,
+                world_normal: normal,
+                material_index: material,
+                back_hit,
+                ..Default::default()
+            }
+        )
     }
 
     fn bounding_box(&self) -> AABB {

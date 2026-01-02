@@ -8,7 +8,7 @@ The primary goal of writing a path tracer was to get a head start before getting
 
 ## 🧩 Current Features:
 - Ray sphere intersection
-- Ray Triangle Intersection _(slower algorithm)_
+- Ray Triangle Intersection _(Möller–Trumbore algorithm)_
 - Lambertian Diffuse _(Only)_
 - EXR skybox support _(for HDR environment lighting and background)_
 - Multithreaded
@@ -17,8 +17,7 @@ The primary goal of writing a path tracer was to get a head start before getting
     - Albedo
     - Emissive Color
     - Emissive Strength
-    - Roughness _(planned, not yet implemented)_
-    - Metalic _(planned, not yet implemented)_
+    - Metallic _(only Isotropic)_
 - BVH (Binned SAH building)
 - Basic Tone Mapping
 - More under way✨...
@@ -54,23 +53,23 @@ or
 The structure is a `Cargo Workspace`. Currently containing two main components/crates.
 - `InsploRay` (core renderer) with folder name `core-engine`
 - `the interactive frontend` which is a basic window and imgui UI with folder name `frontend`
-- _(Planned)_ FFI-safe interface for integration
-- _(Planned)_ A headless Cli for offline rendering
+<!-- - _(Planned)_ FFI-safe interface for integration -->
+<!-- - _(Planned)_ A headless Cli for offline rendering -->
 
-**🧱 Modularity and Architecture**
+<!-- **🧱 Modularity and Architecture** -->
 
-InsploRay is being built with **real modularity** in mind — not just internal code separation, but composable and swappable components that can be replaced or extended.
+<!-- InsploRay is being built with **real modularity** in mind — not just internal code separation, but composable and swappable components that can be replaced or extended. -->
 
-> ✅ **Currently modular**:  
-> The camera system — define your own camera models by implementing a `Camera` trait and plugging them in.
+<!-- > ✅ **Currently modular**: -->  
+<!-- > The camera system — define your own camera models by implementing a `Camera` trait and plugging them in. -->
 
-> 🎯 **Goal**:  
-> Make all core components — integrators, samplers, materials, light sources, scene loaders — modular via Rust traits and FFI-safe boundaries.
+<!-- > 🎯 **Goal**: -->  
+<!-- > Make all core components — integrators, samplers, materials, light sources, scene loaders — modular via Rust traits and FFI-safe boundaries. -->
 
-InsploRay is designed as a **library-first** project, with the intent to:
-- Be embedded in other Rust projects as a crate
-- Expose safe FFI for C/C++ or other languages
-- Serve as a backend for Blender plugins, wasm, native android, or other platforms via FFI or bindings.
+<!-- InsploRay is designed as a **library-first** project, with the intent to: -->
+<!-- - Be embedded in other Rust projects as a crate -->
+<!-- - Expose safe FFI for C/C++ or other languages -->
+<!-- - Serve as a backend for Blender plugins, wasm, native android, or other platforms via FFI or bindings. -->
 
 ## 🧭 How to Contribute
 
@@ -89,8 +88,7 @@ That’s it for now! No strict rules — I’m here to learn too, and happy to f
 Feel free to ask questions, suggest changes, or just explore the code!
 
 ## 🐛 Known issue
-- [ ] The drag for material selector does not behave well with small values (Frontend)
-- [ ] Imgui does not remember the window layout, it's a know issue with imgui-rs crate (Frontend)
+- [ ] The specular bsdf is i think incorrect, same story with DeltaGlass
 
 ## 🔜 My Side Plans
 Order unknown because I am BTech student unable to manage my time corrently....
@@ -98,7 +96,8 @@ Order unknown because I am BTech student unable to manage my time corrently....
 - [x] Loading Scene (.obj`)
 - [ ] Loading Scene (`.glb`/`.gltf`)
 - [ ] Specular BRDF
-- [ ] Metallic BRDF
+- [x] Metallic BRDF (Isotropic)
+- [ ] Metallic BRDF (Anotropic)
 - [ ] Better Scene Representation in memory
 - [ ] Save Image (`EXR` and/or `PNG`)
 - [ ] MIS (Multiple Importance Sampling) in Primary (or currently only) Integrator
