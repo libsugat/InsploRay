@@ -1,4 +1,3 @@
-
 use glam::Vec3;
 
 use crate::geometry::HitPayload;
@@ -31,6 +30,8 @@ impl BxDF for DeltaGlass {
     }
 
     fn eval(&self, _wi: Vec3, _wo: Vec3, _hit_record: &HitPayload) -> Vec3 {
+        // TODO : Learn about this and fix this if there is any problem
+        
         // Delta BxDF has zero contribution except for the sampled direction
         self.base_color * self.ior * self.ior
     }

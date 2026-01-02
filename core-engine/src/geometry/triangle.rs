@@ -43,10 +43,12 @@ impl Geometry for Triangle {
         let t = e2.dot(q_vec) * inv_det;
         if t < 1e-4 { return None; }
 
-        let mut n = self.normal;
-        if n.dot(-ray.direction) < 0.0 {
-            n = -n;
+        let (n, back_hit) = if self.normal.dot(-ray.direction) > 0.0 {
+            (self.normal, false)
         }
+        else {
+            (-self.normal, true)
+        };
 
         let material = if self.material_id < 0 {
             None
@@ -63,6 +65,7 @@ impl Geometry for Triangle {
                 material_index: material,
 
                 uv : Some(Vec2::new(u, v)),
+                back_hit,
                 ..Default::default()
             }
         )

@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -21,7 +20,6 @@ pub struct Viewport {
 
 impl Viewport {
 
-
     pub fn set_dimensions(&mut self, width : u32, height : u32) {
         self.dimensions = [width, height];
         if self.renderer.get_current_size() != self.dimensions {
@@ -38,7 +36,7 @@ impl Viewport {
                 let bvh = BVH::build(&scene);
                 println!("Building BVH done!!");
 
-                scene.bvh = Some(bvh);
+                scene.bvh = bvh;
             }
         }
         drop(scene);
@@ -184,13 +182,16 @@ impl Viewport {
 
 impl Default for Viewport {
     fn default() -> Self {
-        let position = Vec3::new(9.5, 2.25, 0.0);
-        let rotation = Vec3::new(0.0, PI/2.0, 0.0);
+        // let position = Vec3::new(9.5, 2.25, 0.0);
+        let position = Vec3::new(7.67618, 3.2679, 1.66982);
+        let rotation = Vec3::new(0.0, 1.30277, 0.22899);
         let mut cam = PinholeCamera::new(
                 position, 
                 Vec3::ZERO,
-                55.0,
-                35.0,
+                // 55.0,
+                // 35.0,
+                50.0,
+                36.0,
                 [0,0]
             );
         cam.set_rotation(rotation);
