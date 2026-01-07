@@ -10,40 +10,61 @@ pub struct DeltaGlass {
     pub ior: f32, // Index of Refraction
 }
 
+impl DeltaGlass {
+    fn fresnel_term(&self, eta: f32, cos_theta: f32) -> f32 {
+        let mut f_0 = (1.0 - eta) / (1.0 + eta);
+        f_0 *= f_0;
+        
+        f_0 + (1.0 - f_0) * (1.0 - cos_theta).powi(5)
+    }
+}
+
 impl BxDF for DeltaGlass {
-    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, _sampler: &mut Sampler) -> (Vec3, Vec3) {
+    fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3) {
         let ior = if hit_record.back_hit {
-            1.0 / self.ior
+            self.ior
         }
         else {
-            self.ior
+            1.0 / self.ior
         };
 
-        let mut wi = (-wo).refract(hit_record.world_normal, ior);
+        let cos_theta = wo.dot(hit_record.world_normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-        if wi == Vec3::ZERO {
-            wi = (-wo).reflect(hit_record.world_normal);
-            return (wi, hit_record.world_normal);
+        if sin_theta * ior > 1.0 || self.fresnel_term(ior, cos_theta) > sampler.next_f32() {
+            let wi = (-wo).reflect(hit_record.world_normal);
+            (wi, hit_record.world_normal)
         }
-        
-        (wi, -hit_record.world_normal)
+        else {
+            let wi = (-wo).refract(hit_record.world_normal, ior);
+            (wi, -hit_record.world_normal)
+        }
     }
 
-    fn eval(&self, _wi: Vec3, _wo: Vec3, _hit_record: &HitPayload) -> Vec3 {
-        // TODO : Learn about this and fix this if there is any problem
-        
-        // Delta BxDF has zero contribution except for the sampled direction
-        self.base_color * self.ior * self.ior
+    fn eval(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> Vec3 {
+        let ior = if hit_record.back_hit {
+            self.ior
+        }
+        else {
+            1.0 / self.ior
+        };
+
+        let is_transmission = wi.dot(wo) < 0.0;
+        if is_transmission {
+            // TODO : Add transmission energy loss by T term
+            // i.e T * ior * ior
+            self.base_color * ior * ior
+        }
+        else {
+            Vec3::ONE
+        }
     }
 
     fn pdf(&self, _wi: Vec3, _wo: Vec3, _hit_record: &HitPayload) -> f32 {
-        // Delta BxDF: pdf is zero except in the sampled direction (handled in the renderer)
-        // what ever value doesnt matter, never gonna be called if its delta
-        1.0
+        0.0
     }
 
     fn is_delta(&self) -> bool {
         true
     }
 }
-

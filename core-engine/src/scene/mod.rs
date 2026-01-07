@@ -7,8 +7,7 @@ use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::materials::shaders::ggx_glossy::Glossy;
-use crate::materials::shaders::ggx_metal::GGXMetal;
-use crate::materials::{DeltaGlass, Lambertian, Material};
+use crate::materials::{DeltaGlass, Material};
 
 #[derive(Default)]
 pub struct Scene {
@@ -46,7 +45,7 @@ impl Scene {
         };
 
         println!("trying loading .obj");
-        match obj_loader::load_from_file("./assets/models/new_year.obj") {
+        match obj_loader::load_from_file("./assets/models/Cornell_box.obj") {
             Ok((meshes, materials)) => {
                 scene.meshes = meshes;
                 scene.materials = materials;
@@ -58,68 +57,31 @@ impl Scene {
         }
 
         println!("Material : {:?}", scene.materials.len());
-        let mat_2_bsdf = Lambertian {
-            albedo: Vec3::new(0.2, 0.2, 0.2), // tweak as desired
-            emission_color : Vec3::ONE,
-            emissive_power : 10.0,
-            ..Default::default()
-        };
-        scene.materials[2] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_2_bsdf)],
-            weights: vec![1.0],
-        });
-
-        let mat_3_bsdf = Lambertian {
-            albedo: Vec3::new(0.2, 0.2, 0.2), // tweak as desired
-            emission_color : Vec3::new(0.6, 1.0, 0.558),
-            emissive_power : 10.0,
-            ..Default::default()
-        };
-        scene.materials[3] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_3_bsdf)],
-            weights: vec![1.0],
-        });
-
-        let mat_4_bsdf = Lambertian {
-            albedo: Vec3::new(0.2, 0.2, 0.2), // tweak as desired
-            emission_color : Vec3::new(0.896104, 0.037474, 1.0),
-            emissive_power : 10.0,
-            ..Default::default()
-        };
-        scene.materials[4] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_4_bsdf)],
-            weights: vec![1.0],
-        });
-
-        let mat_1_bsdf = GGXMetal {
-            base_color: Vec3::new(1.0, 0.637328, 0.301854),
-            roughness: 0.463636
-        };
-        scene.materials[1] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_1_bsdf)],
-            weights: vec![1.0],
-        });
-
-        let mat_5_bsdf = Lambertian {
-            albedo: Vec3::new(1.0, 1.0, 1.0),
-            // ior: 1.45
-            ..Default::default()
-        };
-        scene.materials[5] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_5_bsdf)],
-            weights: vec![1.0],
-        });
-
-        let mat_6_bsdf = DeltaGlass {
-            base_color: Vec3::new(0.281158, 0.635935, 0.801516),
-            ior: 1.45
-            // roughness: 0.568
-        };
-        scene.materials[6] = Arc::new(Material {
-            shaders: vec![Arc::new(mat_6_bsdf)],
-            weights: vec![1.0],
-        });
-
+        {
+            let _mat_1_bsdf = Glossy {
+                // base_color: Vec3::new(1.0, 0.637328, 0.301854),
+                base_color: Vec3::ONE,
+                roughness: 0.5
+            };
+            let index = scene.materials.len();
+            let mat_6_bsdf = DeltaGlass {
+                base_color: Vec3::new(0.281158, 0.635935, 0.801516),
+                // ior: 1.45
+                ior: 1.33
+                // roughness: 0.568
+            };
+            let mat = Arc::new(Material {
+                shaders: vec![Arc::new(mat_6_bsdf)],
+                weights: vec![1.0],
+            });
+            scene.materials.push(mat);
+            let sphere_1 = Sphere {
+                position: Vec3::new(0.0, 1.0, 0.0),
+                radius: 1.0,
+                material_id: index as i32
+            };
+            scene.spheres.push(sphere_1);
+        }
         scene
     }
 }

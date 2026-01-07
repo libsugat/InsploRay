@@ -5,6 +5,7 @@ use imgui::Ui;
 
 use insploray::acceleration_structure::AccelerationStructure;
 use insploray::acceleration_structure::BVH;
+use insploray::geometry::Sphere;
 use insploray::renderer::RayTracer;
 use insploray::scene::Scene;
 use insploray::cameras::Camera;
@@ -70,16 +71,16 @@ impl Viewport {
                     ui.separator();
                 }
 
-                // if ui.button("Add sphere") {
-                //     let sphere = Sphere{
-                //         position : Vec3::ZERO,
-                //         radius : 1.0,
-                //         material_id : -1, 
-                //     };
-                //     scene.spheres.push(sphere);
-                //     update |= true;
-                // }
-                // ui.separator();
+                if ui.button("Add sphere") {
+                    let sphere = Sphere{
+                        position : Vec3::ZERO,
+                        radius : 1.0,
+                        material_id : -1, 
+                    };
+                    scene.spheres.push(sphere);
+                    update |= true;
+                }
+                ui.separator();
                 ui.separator();
 
                 update |= ui.color_edit3("Sky color", &mut scene.default_sky_color);
@@ -182,9 +183,10 @@ impl Viewport {
 
 impl Default for Viewport {
     fn default() -> Self {
-        // let position = Vec3::new(9.5, 2.25, 0.0);
-        let position = Vec3::new(7.67618, 3.2679, 1.66982);
-        let rotation = Vec3::new(0.0, 1.30277, 0.22899);
+        let position = Vec3::new(9.5, 2.25, 0.0);
+        // let position = Vec3::new(7.67618, 3.2679, 1.66982);
+        // let rotation = Vec3::new(0.0, 1.30277, 0.22899);
+        let rotation = Vec3::new(0.0, std::f32::consts::PI / 2.0, 0.0);
         let mut cam = PinholeCamera::new(
                 position, 
                 Vec3::ZERO,

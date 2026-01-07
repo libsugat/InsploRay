@@ -15,27 +15,33 @@ pub struct GGXMetal {
 
 impl BxDF for GGXMetal {
     fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3) {
-        let r1 = sampler.next_f32();
-        let r2 = sampler.next_f32();
-
-        let alpha = self.roughness * self.roughness;
-        let alpha2 = (alpha * alpha).max(0.0001);
-
-        let cos_theta = ((1.0 - r1) / (1.0 + (alpha2 - 1.0) * r1)).sqrt();
-        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-        let phi = 2.0 * PI * r2;
-
+        let mut wi = Vec3::ZERO;
         
-        let h_local = Vec3::new(
-            sin_theta * phi.cos(),
-            sin_theta * phi.sin(),
-            cos_theta,
-        );
+        // TODO : Move to VNDF (Visual ndf)
+       while wi.dot(hit_record.world_normal) <= 0.0 {
+            let r1 = sampler.next_f32();
+            let r2 = sampler.next_f32();
 
-        let h_world = transform_local_to_world(h_local, hit_record.world_normal).normalize();
+            let alpha = self.roughness * self.roughness;
+            let alpha2 = (alpha * alpha).max(0.000001);
+
+            let cos_theta = ((1.0 - r1) / (1.0 + (alpha2 - 1.0) * r1)).sqrt();
+            let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+            let phi = 2.0 * PI * r2;
+
+
+            let h_local = Vec3::new(
+                sin_theta * phi.cos(),
+                sin_theta * phi.sin(),
+                cos_theta,
+            );
+
+            let h_world = transform_local_to_world(h_local, hit_record.world_normal).normalize();
+            wi = (-wo).reflect(h_world).normalize();
+        }
 
         (
-            (-wo).reflect(h_world).normalize(),
+            wi,
             hit_record.world_normal
         )
     }
@@ -46,12 +52,16 @@ impl BxDF for GGXMetal {
         let ndotwi = n.dot(wi);
         let ndotwo = n.dot(wo);
 
+        if ndotwi <= 0.0 || ndotwo <= 0.0 {
+            return Vec3::ZERO;
+        }
+
         let h = (wi + wo).normalize();
         
         let d = self.ndf(h, n);
         let g = self.g_masking(wi, n) * self.g_masking(wo, n);
         // let g = 1.0;
-        let f = self.fresnel_schlick(wi, h);
+        let f = self.fresnel_schlick(wo, h);
 
         d * g * f / (4.0 *  ndotwo * ndotwi)
     }
@@ -60,16 +70,25 @@ impl BxDF for GGXMetal {
         let h = (wo + wi).normalize();
         let n = hit_record.world_normal;
 
-        let ndoth = n.dot(h);
-        let wodoth = wo.dot(h);
-        self.ndf(h, n) * ndoth / (4.0 * wodoth)
+        let ndotwi = n.dot(wi);
+        let ndotwo = n.dot(wo);
+
+        if ndotwi <= 0.0 || ndotwo <= 0.0 {
+            return 0.0;
+        }
+
+        let ndoth = n.dot(h).max(0.0);
+        let wodoth = wo.dot(h).abs();
+
+        // remove division by G_masking after adding VNDF
+        self.ndf(h, n) * ndoth / (4.0 * wodoth * self.g_masking(wo, n))
     }
 }
 
 impl GGXMetal {
     fn ndf(&self, h: Vec3, n: Vec3) -> f32 {
         let alpha = self.roughness * self.roughness;
-        let alpha2 = (alpha * alpha).max(0.0001);
+        let alpha2 = (alpha * alpha).max(0.000001);
         
         let ndoth = n.dot(h).max(0.0);
         let den = ndoth * ndoth * (alpha2 - 1.0) + 1.0;
@@ -82,16 +101,16 @@ impl GGXMetal {
         let ndotw = n.dot(w).max(0.0);
 
         let alpha = self.roughness * self.roughness;
-        let alpha2 = (alpha * alpha).max(0.0001);
+        let alpha2 = (alpha * alpha).max(0.000001);
 
         let root = (alpha2 + (1.0 - alpha2) * ndotw * ndotw).sqrt();
         (2.0 * ndotw) / (ndotw + root)
     }
 
     // frensel Term or F term
-    fn fresnel_schlick(&self, wi: Vec3, h: Vec3) -> Vec3 {
+    fn fresnel_schlick(&self, wo: Vec3, h: Vec3) -> Vec3 {
         let f_0 = self.base_color;
-        f_0 + (Vec3::ONE - f_0) * (1.0 - wi.dot(h).max(0.0)).powi(5)
+        f_0 + (Vec3::ONE - f_0) * (1.0 - wo.dot(h).max(0.0)).powi(5)
     }
 }
 

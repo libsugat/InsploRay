@@ -72,6 +72,7 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<
 }
 
 fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
+    let emmissive = mat.unknown_param.get("Ke");
     let bxdf = crate::materials::Lambertian {
         // name: mat.name.clone(),
         albedo: match mat.diffuse {
@@ -80,15 +81,16 @@ fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
                 Vec3::from_array(diffuse)
             }
         },
-        // roughness: match mat.shininess {
-        //     None => 0.0,
-        //     Some(shininess) => {
-        //         1.0 - shininess.min(1000.0) / 1000.0 // convert specular exponent to roughness
-        //     }
-        // },
-        // metalic: mat.illumination_model.unwrap_or(0) as f32 / 10.0, // crude approximation
-        emission_color: Vec3::ZERO,
-        emissive_power: 0.0, // max component as power
+        emission_color: match emmissive {
+            None => Vec3::ZERO,
+            Some(values_string) => {
+                let nums : Vec<f32> = values_string.split_whitespace()
+                    .map(|num_str| num_str.parse::<f32>().unwrap())
+                    .collect();
+                Vec3::new(nums[0], nums[1], nums[2])
+            }
+        },
+        emissive_power: 1.0, // max component as power
     };
 
     Material {
