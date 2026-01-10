@@ -69,16 +69,6 @@ impl App {
                     let width = viewport_size[0] as u32;
                     let height = viewport_size[1] as u32;
 
-                    if ui.is_window_focused() {
-
-                        // let camera = self.viewport_renderer.active_camera;
-                        self.viewport.handle_input(
-                            ui,
-                            width,
-                            height,
-                        );
-                    }
-
                     self.viewport.set_dimensions(width, height);
                     self.viewport
                         .prepare_buffer();
@@ -117,23 +107,21 @@ impl App {
                         updated |= true;
                     });
 
-                    let camera = self.viewport.camera.read().unwrap();
-                    let mut focal_length = camera.focal_length;
-                    let mut sensor_size = camera.sensor_size;
-                    drop(camera);
+                    let mut focal_length = self.viewport.camera.focal_length;
+                    let mut sensor_size = self.viewport.camera.sensor_size;
 
                     if imgui::Drag::new("Focal Length")
                         .build(ui, &mut focal_length) && focal_length > 0.0  {
-                        self.viewport.camera.write().unwrap()
-                            .set_focal_length(focal_length);
-                        updated |= true;
+                        // self.viewport.camera
+                        //     .set_focal_length(focal_length);
+                        // updated |= true;
                     }
 
                     if imgui::Drag::new("Sensor Size")
                         .build(ui, &mut sensor_size) && sensor_size > 0.0 {
-                        self.viewport.camera.write().unwrap()
-                            .set_sensor_size(sensor_size);
-                        updated |= true;
+                        // self.viewport.camera
+                        //     .set_sensor_size(sensor_size);
+                        // updated |= true;
                     }
                     
                     if updated {

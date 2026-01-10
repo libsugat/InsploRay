@@ -5,3 +5,6 @@ Cargo.lock
 # Ignore the 'setting' directory where INI files are stored
 settings/
 
+# Ignore Outputs of cli
+outputs/
+

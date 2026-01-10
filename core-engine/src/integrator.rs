@@ -4,7 +4,7 @@ use glam::{Vec3, Vec4};
 
 use crate::acceleration_structure::AccelerationStructure;
 use crate::Ray;
-use crate::cameras::SharedCamera;
+use crate::cameras::Camera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
 use crate::materials::{Material, Lambertian};
@@ -23,12 +23,12 @@ impl Integrator {
         scene: &Scene,
         x: u32,
         y: u32,
-        camera: &SharedCamera,
+        camera: &dyn Camera,
         sampler: &mut Sampler,
     ) -> Vec4 /* returns radiance per RGB channel */ {
-        let cam = camera.read().unwrap();
+        // let cam = camera.read().unwrap();
+        let cam = camera;
         let mut ray = cam.get_ray(x, y);
-        drop(cam);
 
         let mut light = Vec3::ZERO;
 

@@ -1,8 +1,9 @@
+use std::error::Error;
 use std::sync::Arc;
 
 use glam::Vec3;
 
-use crate::acceleration_structure::BVH;
+use crate::acceleration_structure::{AccelerationStructure, BVH};
 use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
@@ -44,16 +45,9 @@ impl Scene {
             ..Default::default()
         };
 
-        println!("trying loading .obj");
-        match obj_loader::load_from_file("./assets/models/Cornell_box.obj") {
-            Ok((meshes, materials)) => {
-                scene.meshes = meshes;
-                scene.materials = materials;
-                println!(".obj loaded successfully..");
-            },
-            Err(_) => {
-                println!("error loading .obj");
-            }
+        match scene.load_data_form_obj("./assets/models/Cornell_box.obj") {
+            Ok(_) => println!("Example Scene loaded successfully"),
+            Err(e) => println!("Error loading file : {:?}", e)
         }
 
         println!("Material : {:?}", scene.materials.len());
@@ -83,6 +77,35 @@ impl Scene {
             scene.spheres.push(sphere_1);
         }
         scene
+    }
+
+    pub fn build_bvh(&mut self) {
+        self.bvh = BVH::build(self);
+    }
+
+    pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
+        match obj_loader::load_from_file(path) {
+            Ok((mut meshes, materials)) => {
+                let size = self.materials.len() as i32;
+                self.materials.extend(materials);
+
+                meshes.iter_mut().for_each(|mesh| {
+                    mesh.triangles.iter_mut().for_each(|triangle| {
+                        match triangle.material_id {
+                            -1 => (),
+                            id => triangle.material_id = id + size
+                        }
+                    });
+                });
+
+                self.meshes = meshes;
+
+                Ok(())
+            },
+            Err(err) => {
+                Err(err)
+            }
+        }
     }
 }
 

@@ -3,7 +3,7 @@ use glam::{Mat4, Vec2, Vec3, Vec4Swizzles};
 pub use super::Camera;
 use crate::Ray;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct PinholeCamera {
     pub position: Vec3,
     pub rotation: Vec3, // [x, y, z] Eular rotation in radians
@@ -110,6 +110,10 @@ impl Camera for PinholeCamera {
     fn set_image_resolutions(&mut self, image_resolution: [u32; 2]) {
         self.image_size = image_resolution;
         self.aspect_ratio = self.image_size[0] as f32 / self.image_size[1] as f32;
+    }
+
+    fn get_image_resolutions(&self) -> [u32; 2] {
+        self.image_size
     }
 
     fn compute_transformation_matrix(&mut self) {
@@ -237,4 +241,5 @@ mod test {
             );
         }
     }
+
 }
