@@ -117,9 +117,9 @@ impl Camera for PinholeCamera {
     }
 
     fn compute_transformation_matrix(&mut self) {
-        let rotation = Mat4::from_rotation_z(self.rotation.z)
+        let rotation = Mat4::from_rotation_x(self.rotation.x)
             * Mat4::from_rotation_y(self.rotation.y)
-            * Mat4::from_rotation_x(self.rotation.x);
+            * Mat4::from_rotation_z(self.rotation.z);
 
         let translation = Mat4::from_translation(self.position);
 

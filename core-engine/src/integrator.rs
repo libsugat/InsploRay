@@ -75,7 +75,7 @@ impl Integrator {
             } else {
                 // sky box, or something
                 let sky_color = match &scene.skybox {
-                    Some(exr) => exr.sample(ray.direction),
+                    Some(sky) => sky.light_in_dir(&ray),
                     None => scene.default_sky_color,
                 };
                 light += sky_color * contribution;

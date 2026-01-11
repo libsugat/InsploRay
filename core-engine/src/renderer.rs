@@ -2,11 +2,12 @@ use std::sync::{Arc};
 use std::time::{Duration, Instant};
 
 use crossbeam::channel::Receiver;
-use glam::Vec3;
+use glam::{Vec3};
 
 use crate::accumulators::{Accumulator, TileAccumulator};
 use crate::cameras::{PinholeCamera, SharedCamera, SharedCameraBox};
 use crate::concurrency::Threadpool;
+use crate::file_formats::ExrImage;
 use crate::integrator::Integrator;
 use crate::scene::Scene;
 
@@ -24,6 +25,17 @@ pub struct RayTracer {
 }
 
 impl RayTracer {
+    // temperory function
+    pub fn save_exr(&self, path: &str) {
+        let buff = self.accumulator.get_image_buffer();
+
+        let exr = ExrImage {
+            rgb: buff
+        };
+
+        exr.save_to_files(path);
+    }
+
     pub fn new(width: u32, height: u32) -> Self {
         let camera = PinholeCamera::new(
             Vec3::new(0.0, 0.0, 2.0),

@@ -1,4 +1,5 @@
-use std::sync::{Arc};
+use std::f32::consts::PI;
+use std::sync::Arc;
 use std::time::Instant;
 
 use clap::Parser;
@@ -6,27 +7,27 @@ use clap::Parser;
 use insploray::renderer::RayTracer;
 use insploray_cli::CliConfig;
 
-use insploray::cameras::PinholeCamera;
-use insploray::scene::{obj_loader, Scene};
 use insploray::Vec3;
+use insploray::cameras::PinholeCamera;
+use insploray::scene::{Scene, obj_loader};
 
 fn main() {
     let cli_config = CliConfig::parse();
 
     let position = Vec3::new(9.5, 2.25, 0.0);
     let cam = PinholeCamera::new(
-        position, 
-        Vec3::new(0.0, std::f32::consts::PI / 2.0, 0.0),
+        position,
+        Vec3::new(0.0, PI / 2.0, 0.0),
+        // Vec3::new(0.0, PI / 2.0 , PI),
+        // Vec3::ZERO,
         50.0,
         36.0,
-        [cli_config.width, cli_config.height]
+        [cli_config.width, cli_config.height],
     );
-
 
     let mut scene = Scene {
         spheres: vec![],
         materials: vec![],
-        // default_sky_color: Vec3::new(0.6, 0.7, 0.9),
         default_sky_color: 0.031 * Vec3::ONE,
 
         ..Default::default()
@@ -38,7 +39,7 @@ fn main() {
             scene.meshes = meshes;
             scene.materials = materials;
             println!("Scene loaded successfully..");
-        },
+        }
         Err(e) => {
             println!("Error loading scene : {}", e);
         }
@@ -59,8 +60,8 @@ fn main() {
         println!("{:?}", renderer.get_last_render_time())
     }
 
-    let _image = renderer.get_output();
     let time_elapsed = start_instance.elapsed();
+    renderer.save_exr(&cli_config.output);
 
-    println!("Running slow_function() took {time_elapsed:?}");
+    println!("Rendering took took {time_elapsed:?}");
 }

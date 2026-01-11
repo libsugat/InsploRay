@@ -1,25 +1,30 @@
-use glam::{Vec4};
+use glam::{Vec3, Vec4, Vec4Swizzles};
 
 use super::tile_buffer::TileAccumulator;
-use crate::utils::convert_to_argb;
+use crate::{ImageBuffer, utils::convert_to_argb};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Accumulator {
     width: u32,
     height: u32,
 
-    framebuffer: Vec<Vec4>,
+    image_buffer: ImageBuffer<Vec4>,
     sample_counts: Vec<u32>,
 }
 
 impl Accumulator {
+    pub fn _get_buffer(&self) -> ImageBuffer<Vec4> {
+        self.image_buffer.clone()
+    }
+
     pub fn new(width: u32, height: u32) -> Self {
         let size = (width * height) as usize;
+        let framebuffer = ImageBuffer::new(width as usize, height as usize);
 
         Self {
             width,
             height,
-            framebuffer: vec![Vec4::ZERO; size],
+            image_buffer: framebuffer,
             sample_counts: vec![0; size],
         }
     }
@@ -34,7 +39,7 @@ impl Accumulator {
 
         let index = (y * self.width + x) as usize;
 
-        self.framebuffer[index] += color;
+        self.image_buffer[(x as usize, y as usize)] += color;
         self.sample_counts[index] += 1;
     }
 
@@ -42,14 +47,23 @@ impl Accumulator {
         debug_assert!(x < self.width && y < self.height, "Pixel out of bounds");
 
         let index = (y * self.width + x) as usize;
-        let color = self.framebuffer[index];
+        let color = self.image_buffer.buffer[index];
         let samples = self.sample_counts[index].max(1);
 
         color / samples as f32
     }
 
+    pub fn get_image_buffer(&self) -> ImageBuffer<Vec3> {
+        let mut buffer = ImageBuffer::new(self.width as usize, self.height as usize);
+        buffer.buffer.iter_mut().enumerate().for_each(|(i, pixel)| {
+            *pixel = self.image_buffer.buffer[i].xyz() / self.sample_counts[i] as f32;
+        });
+
+        buffer
+    }
+
     pub fn get_argb_pixel(&self, index: usize) -> u32 {
-        let color = self.framebuffer[index];
+        let color = self.image_buffer.buffer[index];
         let samples = self.sample_counts[index].max(1);
 
         // let mut averaged = color / samples as f32;
@@ -102,7 +116,12 @@ impl Accumulator {
             self.height, b.height
         );
 
-        for (c1, c2) in self.framebuffer.iter_mut().zip(b.framebuffer) {
+        for (c1, c2) in self
+            .image_buffer
+            .buffer
+            .iter_mut()
+            .zip(b.image_buffer.buffer)
+        {
             *c1 += c2;
         }
 
@@ -112,8 +131,8 @@ impl Accumulator {
     }
 
     pub fn write_to_image_buffer(&self, buffer: &mut Vec<u32>) {
-        if buffer.len() != self.framebuffer.len() {
-            *buffer = vec![0xFF000000_u32; self.framebuffer.len()]
+        if buffer.len() != self.image_buffer.buffer.len() {
+            *buffer = vec![0xFF000000_u32; self.image_buffer.buffer.len()]
         };
 
         buffer.iter_mut().enumerate().for_each(|(i, pixel)| {
@@ -135,7 +154,7 @@ impl Accumulator {
 
                 let global_index = (global_y * self.width + global_x) as usize;
 
-                self.framebuffer[global_index] += tile.framebuffer[tile_index];
+                self.image_buffer.buffer[global_index] += tile.framebuffer[tile_index];
                 self.sample_counts[global_index] += tile.sample_counts[tile_index];
             }
         }

@@ -16,10 +16,10 @@ pub struct CliConfig {
     #[arg(long)]
     pub seed: Option<u32>,
     /// image width
-    #[arg(short = 'W', long, default_value_t = 720)]
+    #[arg(short = 'W', long, default_value_t = 1280)]
     pub width: u32,
     /// image height
-    #[arg(short = 'H', long, default_value_t = 1280)]
+    #[arg(short = 'H', long, default_value_t = 720)]
     pub height: u32,
     /// Tile size
     #[arg(short, long, default_value_t = 32)]

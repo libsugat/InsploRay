@@ -7,6 +7,7 @@ use crate::acceleration_structure::{AccelerationStructure, BVH};
 use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
+use crate::lighting::Skybox;
 use crate::materials::shaders::ggx_glossy::Glossy;
 use crate::materials::{DeltaGlass, Material};
 
@@ -18,7 +19,7 @@ pub struct Scene {
     pub materials: Vec<Arc<Material>>,
     pub default_sky_color: Vec3,
 
-    pub skybox: Option<ExrImage>,
+    pub skybox: Option<Skybox>,
     pub bvh : Option<BVH>
 }
 
@@ -26,14 +27,13 @@ impl Scene {
     // This is just something this is not what i want to use, its being used for test
     // consider following code as a config file that changes like like a commond in cli
     pub fn get_example_scene() -> Self {
-        let exr_img = ExrImage::load_exr_image("./assets/env/default_skybox_1_.exr");
-        if let Err(e) = &exr_img {
-            println!(
-                "Current working directory: {}",
-                std::env::current_dir().unwrap().display()
-            );
-            eprintln!("Failed loading EXR: {}", e);
-        }
+        let skybox = match ExrImage::load_exr_image("./assets/env/default_skybox_1.exr") {
+            Err(e) => {
+                eprintln!("Failed loading EXR: {}", e);
+                None
+            },
+            Ok(exr) => Some(Skybox::load_for_exr(&exr))
+        };
 
         let mut scene = Self {
             spheres: vec![],
@@ -41,7 +41,7 @@ impl Scene {
             // default_sky_color: Vec3::new(0.6, 0.7, 0.9),
             default_sky_color: 0.051 * Vec3::ONE,
 
-            skybox: exr_img.ok(),
+            skybox: skybox,
             ..Default::default()
         };
 
@@ -59,7 +59,8 @@ impl Scene {
             };
             let index = scene.materials.len();
             let mat_6_bsdf = DeltaGlass {
-                base_color: Vec3::new(0.281158, 0.635935, 0.801516),
+                // base_color: Vec3::new(0.281158, 0.635935, 0.801516),
+                base_color: Vec3::ONE,
                 // ior: 1.45
                 ior: 1.33
                 // roughness: 0.568

@@ -25,8 +25,8 @@ impl Geometry for Mesh {
             ..Default::default()
         };
         
-        for (_i, sphere) in self.triangles.iter().enumerate() {
-            if let Some(payload) = sphere.intersect_ray(ray) {
+        for triangle in self.triangles.iter() {
+            if let Some(payload) = triangle.intersect_ray(ray) {
                 if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
                     hit_distance = payload.hit_distance;
                     closest_hit = payload;
