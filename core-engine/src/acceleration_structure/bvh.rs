@@ -10,8 +10,6 @@ use crate::ray::Ray;
 use crate::scene::Scene;
 use crate::Vec3;
 
-const MAX_PRIMS_IN_NODE: usize = 4;
-const BIN_COUNT: usize = 12;
 
 #[derive(Debug)]
 pub enum BVHNode {
@@ -106,6 +104,10 @@ impl AccelerationStructure for BVHNode {
         }
     }
 }
+
+
+const MAX_PRIMS_IN_NODE: usize = 4;
+const BIN_COUNT: usize = 12;
 
 #[derive(Debug, Clone, Copy)]
 struct Bin {

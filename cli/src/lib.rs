@@ -7,7 +7,10 @@ pub struct CliConfig {
 
     /// Path to scene to render, ends with .obj
     #[arg(name = "file")]
-    pub input_file_path: String,
+    pub input_file_path: Option<String>,
+    /// Path to output file. Ending with .exr
+    #[arg(short, long)]
+    pub output: String,
 
     /// Samples per pixel
     #[arg(short, long, default_value_t = 64)]
@@ -28,7 +31,4 @@ pub struct CliConfig {
     #[arg(short, long, default_value_t = 5)]
     pub bounces: u32,
 
-    /// Path to output file. Ending with .exr
-    #[arg(short, long)]
-    pub output: String,
 }

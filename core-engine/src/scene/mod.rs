@@ -27,7 +27,7 @@ impl Scene {
     // This is just something this is not what i want to use, its being used for test
     // consider following code as a config file that changes like like a commond in cli
     pub fn get_example_scene() -> Self {
-        let skybox = match ExrImage::load_exr_image("./assets/env/default_skybox_1.exr") {
+        let skybox = match ExrImage::load_exr_image("./assets/env/default_skybox_1_.exr") {
             Err(e) => {
                 eprintln!("Failed loading EXR: {}", e);
                 None
@@ -59,10 +59,10 @@ impl Scene {
             };
             let index = scene.materials.len();
             let mat_6_bsdf = DeltaGlass {
-                // base_color: Vec3::new(0.281158, 0.635935, 0.801516),
-                base_color: Vec3::ONE,
-                // ior: 1.45
-                ior: 1.33
+                base_color: Vec3::new(0.281158, 0.635935, 0.801516),
+                // base_color: Vec3::ONE,
+                ior: 1.45
+                // ior: 1.33
                 // roughness: 0.568
             };
             let mat = Arc::new(Material {

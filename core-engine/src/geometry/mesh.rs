@@ -41,9 +41,15 @@ impl Geometry for Mesh {
     }
 
     fn bounding_box(&self) -> AABB {
-        AABB {
+        let mut aabb = AABB {
             min: Vec3::ZERO,
-            max: Vec3::ONE
-        }
+            max: Vec3::ZERO
+        };
+
+        self.triangles.iter().for_each(|tri| {
+            aabb = AABB::union_box(aabb, tri.bounding_box());
+        });
+
+        aabb
     }
 }

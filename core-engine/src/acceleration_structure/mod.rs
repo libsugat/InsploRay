@@ -64,4 +64,5 @@ pub trait AccelerationStructure {
 }
 
 pub mod bvh;
-pub type BVH = bvh::BVHNode;
+pub mod bvh_array;
+pub use bvh_array::BVH;

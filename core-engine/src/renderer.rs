@@ -46,7 +46,7 @@ impl RayTracer {
         );
 
         let integrator = Integrator {
-            bounces: 10,
+            bounces: 5,
             max_compulsory_bounces: 3,
         };
         let accumulator = Accumulator::new(width, height);
@@ -143,7 +143,7 @@ impl RayTracer {
     pub fn render(&mut self, scene: &Arc<Scene>) {
         let render_start_time = Instant::now();
 
-        let tile_size = 64;
+        let tile_size = 32;
         let mut jobs_dispached = 0;
 
         for tile_y in (0..self.height).step_by(tile_size as usize) {

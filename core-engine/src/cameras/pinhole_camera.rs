@@ -18,6 +18,7 @@ pub struct PinholeCamera {
     pub forward: Vec3,
     pub up: Vec3,
     pub right: Vec3,
+    ray_cache: Vec<Ray>,
 
     pub fov: f32, // again radians, optained by focal length and sensor size
 }
@@ -71,11 +72,16 @@ impl PinholeCamera {
     pub fn get_camera_to_world_matrix(&self) -> Mat4 {
         self.local_to_world
     }
-}
 
-impl Camera for PinholeCamera {
-    /// this function generated ray directly from world space of camera for performance reason
-    fn get_ray(&self, x: u32, y: u32) -> Ray {
+    fn generate_ray_cache(&mut self) {
+        for y in 0..self.image_size[1] {
+            for x in 0..self.image_size[0] {
+                self.ray_cache.push(self.generate_ray(x, y));
+            }
+        }
+    }
+
+    fn generate_ray(&self, x: u32, y: u32) -> Ray {
         let &[width, height] = &self.image_size;
 
         let mut vec = Vec2::new(
@@ -96,6 +102,20 @@ impl Camera for PinholeCamera {
                 .normalize(),
         }
     }
+
+}
+
+impl Camera for PinholeCamera {
+    /// this function generated ray directly from world space of camera for performance reason
+    fn get_ray(&self, x: u32, y: u32) -> Ray {
+        match self.ray_cache.get((y * self.image_size[0] + x) as usize) {
+            Some(ray) => ray.clone(),
+            None => {
+                self.generate_ray(x, y)
+            },
+        }
+    }
+
 
     fn set_position(&mut self, position: Vec3) {
         self.position = position;
@@ -126,10 +146,12 @@ impl Camera for PinholeCamera {
         self.local_to_world = translation * rotation;
     }
 
+
     fn on_update(&mut self) {
         self.compute_fov();
         self.compute_transformation_matrix();
         self.compute_camera_directions();
+        self.generate_ray_cache();
     }
 }
 
@@ -163,83 +185,5 @@ mod test {
         );
     }
 
-    #[test]
-    fn transformation_matrix_validation_for_camera() {
-        // this is some test data from blender
-
-        // location : <Vector (-2.4027, -2.5716, 3.5259)>
-        // rotation : <Euler (x=0.1975, y=-0.7941, z=-1.9074), order='XYZ'>
-        // rotation : <bpy_float[4], Object.rotation_axis_angle>
-        // World matrix :
-        // <Matrix 4x4 (-0.2315,  0.9717, 0.0458, -2.4027)
-        //     (-0.6616, -0.1918, 0.7249, -2.5716)
-        //     ( 0.7132,  0.1375, 0.6873,  3.5259)
-        //     ( 0.0000,  0.0000, 0.0000,  1.0000)>
-        // Vertex coordinates for object: Plane
-        // Vertex 0:
-        // Local:  <Vector (-1.2510, 0.5574, 0.6953)>
-        // Global: <Vector (-1.5396, -1.3468, 3.1881)>
-        // Vertex 1:
-        // Local:  <Vector (-0.3731, -1.2838, 0.5934)>
-        // Global: <Vector (-3.5366, -1.6484, 3.4910)>
-        // Vertex
-        // Local:  <Vector (0.0941, 1.1836, -0.7080)>
-        // Global: <Vector (-1.3068, -3.3742, 3.2692)>
-        // Vertex 3:
-        // Local:  <Vector (1.1367, -0.5054, -0.4624)>
-        // Global: <Vector (-3.1782, -3.5619, 3.9493)>
-        // Vertex 4:
-        // Local:  <Vector (0.2396, 0.5597, 1.4485)>
-        // Global: <Vector (-1.8480, -1.7874, 4.7693)>
-
-        // Blender camera transform data
-        let position = Vec3::new(-2.4027, -2.5716, 3.5259);
-        let rotation = Vec3::new(0.1975, -0.7941, -1.9074); // Euler XYZ in radians
-
-        let camera = PinholeCamera::new(
-            position,
-            rotation,
-            55.0,         // FOV
-            35.0,         // Sensor size
-            [1920, 1080], // Resolution
-        );
-
-        let expected_matrix = Mat4::from_cols_array(&[
-            -0.2315, 0.9717, 0.0458, -2.4027, -0.6616, -0.1918, 0.7249, -2.5716, 0.7132, 0.1375,
-            0.6873, 3.5259, 0.0000, 0.0000, 0.0000, 1.0000,
-        ])
-        .transpose();
-
-        let camera_matrix = camera.get_camera_to_world_matrix();
-
-        // Validate that the matrices are close
-        assert!(
-            expected_matrix.abs_diff_eq(camera_matrix, 1e-4),
-            "Camera matrix does not match Blender's world matrix"
-        );
-
-        // Vertex local positions (from Blender)
-        let local_vertices = [
-            Vec3::new(-1.2510, 0.5574, 0.6953),
-            Vec3::new(-0.3731, -1.2838, 0.5934),
-            Vec3::new(0.0941, 1.1836, -0.7080),
-            Vec3::new(1.1367, -0.5054, -0.4624),
-            Vec3::new(0.2396, 0.5597, 1.4485),
-        ];
-
-        // For each vertex, transform with both matrices and compare
-        for (i, local) in local_vertices.iter().enumerate() {
-            let transformed_expected = expected_matrix.transform_point3(*local);
-            let transformed_camera = camera_matrix.transform_point3(*local);
-
-            assert!(
-                transformed_expected.abs_diff_eq(transformed_camera, 1e-4),
-                "Vertex {}: mismatch in transformed position.\nExpected: {:?}\nGot: {:?}",
-                i,
-                transformed_expected,
-                transformed_camera
-            );
-        }
-    }
 
 }

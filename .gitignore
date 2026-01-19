@@ -7,4 +7,5 @@ settings/
 
 # Ignore Outputs of cli
 outputs/
-
+pref.data
+pref.data.old
