@@ -40,7 +40,6 @@ impl AccelerationStructure for BVH {
 
         let res = bvh.build_recursive(&root);
         assert_eq!(res, 0);
-        println!("nodes : {}", bvh.node_type.len());
         Some(bvh)
     }
 
@@ -52,16 +51,13 @@ impl AccelerationStructure for BVH {
         let mut closest_hit: Option<HitPayload> = None;
 
         while let Some(idx) = stack.pop() {
-            let bounds = self.bounds.get(idx).unwrap();
-            if !bounds.intersect(ray) {
-                continue;
-            }
 
             let node = self.node_type.get(idx).unwrap();
             match node {
                 NodeType::Leaf => {
-                    let start = self.prims_start.get(idx).unwrap().clone();
-                    let count = self.prims_count.get(idx).unwrap().clone();
+                    let (start, count) = unsafe {
+                        (*self.prims_start.get_unchecked(idx), *self.prims_count.get_unchecked(idx))
+                    };
 
                     let prims = &self.prims[start..start + count];
                     for prim in prims.iter() {
@@ -82,11 +78,24 @@ impl AccelerationStructure for BVH {
                     let left = self.left.get(idx).unwrap().clone();
                     let right = self.right.get(idx).unwrap().clone();
 
-                    if left > 0 {
-                        stack.push(left as usize);
-                    }
-                    if right > 0 {
-                        stack.push(right as usize);
+                    let left_bounds = self.bounds.get(left).clone().unwrap();
+                    let right_bounds = self.bounds.get(right).clone().unwrap();
+
+                    match (left_bounds.intersect(ray), right_bounds.intersect(ray)) {
+                        (None, None) => (),
+                        (Some((_,_)), None) => { stack.push(left);},
+                        (None, Some((_, _))) => { stack.push(right);},
+                        (Some((tl, _)), Some((tr, _))) => {
+                            let (far, near) = if tl < tr {
+                                (right, left)
+                            }
+                            else {
+                                (left, right)
+                            };
+
+                            stack.push(far);
+                            stack.push(near);
+                        }
                     }
                 }
             }

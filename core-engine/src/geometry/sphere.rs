@@ -70,5 +70,10 @@ impl Geometry for Sphere {
             max: self.position + bias_vec
         }
     }
+
+    fn centroid(&self) -> Vec3 {
+        self.position
+    }
+
 }
 

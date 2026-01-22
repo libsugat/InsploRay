@@ -22,6 +22,10 @@ use ray::Ray;
 pub use glam::Vec2;
 pub use glam::Vec3;
 
+pub mod consts {
+    pub const EPSILON : f32 = f32::EPSILON;
+}
+
 #[derive(Default, Debug, Clone)]
 pub struct ImageBuffer<PixelData> {
     width: usize,

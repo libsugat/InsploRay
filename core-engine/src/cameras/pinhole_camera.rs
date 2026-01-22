@@ -93,13 +93,15 @@ impl PinholeCamera {
         vec.x *= self.aspect_ratio;
 
         let ray_direction = Vec3::new(vec.x, vec.y, -1.0);
+        let ray_dir_global = self
+                .local_to_world
+                .transform_vector3(ray_direction)
+                .normalize();
 
         Ray {
             origin: self.position,
-            direction: self
-                .local_to_world
-                .transform_vector3(ray_direction)
-                .normalize(),
+            direction: ray_dir_global,
+            inv_d: 1.0 / ray_dir_global
         }
     }
 

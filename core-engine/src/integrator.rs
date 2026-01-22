@@ -3,7 +3,7 @@ use std::sync::Arc;
 use glam::{Vec3, Vec4};
 
 use crate::acceleration_structure::AccelerationStructure;
-use crate::Ray;
+use crate::{Ray, consts};
 use crate::cameras::Camera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
@@ -70,8 +70,9 @@ impl Integrator {
                     contribution /= p;
                 }
                 
-                ray.origin = payload.world_position + scatter_data.shading_normal * 1e-4;
+                ray.origin = payload.world_position + scatter_data.shading_normal * consts::EPSILON;
                 ray.direction = scatter_data.wi;
+                ray.inv_d = 1.0 / scatter_data.wi;
             } else {
                 // sky box, or something
                 let sky_color = match &scene.skybox {

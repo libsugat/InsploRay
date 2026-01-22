@@ -1,7 +1,7 @@
 use glam::{Vec2, Vec3};
 
 use crate::acceleration_structure::AABB;
-use crate::Ray;
+use crate::{Ray, consts};
 use crate::geometry::{Geometry, HitPayload};
 
 #[derive(Debug, Clone, Copy)]
@@ -29,7 +29,7 @@ impl Geometry for Triangle {
         let p = ray.direction.cross(e2);
 
         let det = e1.dot(p);
-        if det.abs() < 1e-4 { return None; }
+        if det.abs() < consts::EPSILON { return None; }
         let inv_det = 1.0 / det;
 
         let t_vec = ray.origin - self.v0;
@@ -41,7 +41,7 @@ impl Geometry for Triangle {
         if v < 0.0 || u + v > 1.0 { return None; }
 
         let t = e2.dot(q_vec) * inv_det;
-        if t < 1e-4 { return None; }
+        if t < consts::EPSILON { return None; }
 
         let (n, back_hit) = if self.normal.dot(-ray.direction) > 0.0 {
             (self.normal, false)
@@ -79,7 +79,7 @@ impl Geometry for Triangle {
         max = Vec3::max(max, self.v2);
 
         // Optional: Expand slightly to avoid degenerate boxes
-        let epsilon = 1e-4;
+        let epsilon = consts::EPSILON;
         let min = Vec3::new(min.x - epsilon, min.y - epsilon, min.z - epsilon);
         let max = Vec3::new(max.x + epsilon, max.y + epsilon, max.z + epsilon);
 
@@ -87,6 +87,10 @@ impl Geometry for Triangle {
             min: min,
             max: max
         }
+    }
+
+    fn centroid(&self) -> Vec3 {
+        (self.v0 + self.v1 + self.v2) / 3.0
     }
 }
 

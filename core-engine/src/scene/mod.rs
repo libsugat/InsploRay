@@ -46,6 +46,7 @@ impl Scene {
         };
 
         match scene.load_data_form_obj("./assets/models/Cornell_box.obj") {
+        // match scene.load_data_form_obj("./../InsploRayMemorialScenes/Bunny.obj ") {
             Ok(_) => println!("Example Scene loaded successfully"),
             Err(e) => println!("Error loading file : {:?}", e)
         }

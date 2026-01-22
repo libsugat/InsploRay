@@ -52,4 +52,18 @@ impl Geometry for Mesh {
 
         aabb
     }
+
+    fn centroid(&self) -> Vec3 {
+        if self.triangles.len() == 0 {
+            return Vec3::ZERO;
+        }
+
+        let mut c = Vec3::ZERO;
+        self.triangles.iter().for_each(|tri| {
+            c += tri.centroid();
+        });
+
+        c / self.triangles.len() as f32
+    }
+
 }

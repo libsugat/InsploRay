@@ -26,13 +26,11 @@ impl AABB {
     }
 
     #[inline(always)]
-    pub fn intersect(&self, ray: &Ray) -> bool {
-        // Compute reciprocal of direction (SIMD)
-        let inv_d = ray.direction.recip();
+    pub fn intersect(&self, ray: &Ray) -> Option<(f32, f32)> {
 
         // Compute intersection distances for each axis simultaneously
-        let t0 = (self.min - ray.origin) * inv_d;
-        let t1 = (self.max - ray.origin) * inv_d;
+        let t0 = (self.min - ray.origin) * ray.inv_d;
+        let t1 = (self.max - ray.origin) * ray.inv_d;
 
         // Swap where direction is negative
         let tmin = t0.min(t1);
@@ -43,7 +41,12 @@ impl AABB {
         let t_exit = tmax.min_element();
 
         // Intersection test
-        t_exit >= t_enter && t_exit >= 0.0
+        if t_exit >= t_enter && t_exit >= 0.0 {
+            Some((t_enter.max(0.0), t_exit))
+        }
+        else {
+            None
+        }
     }
 
     pub fn surface_area(&self) -> f32 {
@@ -52,7 +55,7 @@ impl AABB {
     }
 
     pub fn centroid(&self) -> Vec3 {
-        0.5 * (self.max - self.min)
+        0.5 * (self.max + self.min)
     }
 }
 
@@ -64,5 +67,6 @@ pub trait AccelerationStructure {
 }
 
 pub mod bvh;
+// pub type BVH = bvh::BVHNode;
 pub mod bvh_array;
 pub use bvh_array::BVH;

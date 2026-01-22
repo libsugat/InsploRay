@@ -20,6 +20,7 @@ pub struct HitPayload {
 pub trait Geometry {
     fn intersect_ray(&self, ray: &Ray) -> Option<HitPayload>;
     fn bounding_box(&self) -> AABB;
+    fn centroid(&self) -> Vec3;
 }
 
 pub mod sphere;
