@@ -36,6 +36,18 @@ impl RayTracer {
         exr.save_to_files(path);
     }
 
+    pub fn set_tp_size(&mut self, threads: usize) {
+        if let Some(tp) = self.threadpool.take() {
+            drop(tp);
+        }
+        if let Some(rx) = self.threadpool_result_rx.take() {
+            drop(rx);
+        }
+        let (tp, result_rx) = Threadpool::new(threads);
+        self.threadpool = Some(tp);
+        self.threadpool_result_rx = Some(result_rx);
+    }
+
     pub fn new(width: u32, height: u32) -> Self {
         let camera = PinholeCamera::new(
             Vec3::new(0.0, 0.0, 2.0),
@@ -46,13 +58,11 @@ impl RayTracer {
         );
 
         let integrator = Integrator {
-            bounces: 5,
+            bounces: 7,
             max_compulsory_bounces: 3,
         };
         let accumulator = Accumulator::new(width, height);
         let shared_acc = accumulator;
-
-        let (tp, result_rx) = Threadpool::new(4);
 
         Self {
             width: 0,
@@ -63,8 +73,8 @@ impl RayTracer {
             accumulator: shared_acc,
 
             integrator,
-            threadpool: Some(tp),
-            threadpool_result_rx: Some(result_rx),
+            threadpool: None,
+            threadpool_result_rx: None,
         }
     }
 

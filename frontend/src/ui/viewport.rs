@@ -73,6 +73,7 @@ impl Default for Viewport {
         let camera =  Arc::new(cam);
 
         let mut renderer = RayTracer::new(0, 0);
+        renderer.set_tp_size(4);
         renderer.set_active_camera(camera.clone());
         let mut scene = Scene::get_example_scene();
         scene.build_bvh();

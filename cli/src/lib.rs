@@ -31,4 +31,7 @@ pub struct CliConfig {
     #[arg(short, long, default_value_t = 5)]
     pub bounces: u32,
 
+    /// No of threads to be used by the program to render image (no of cpu cores is recomended)
+    #[arg(short = 't', long, default_value_t = 4)]
+    pub nthreads: usize,
 }

@@ -68,6 +68,7 @@ fn main() {
     println!("Copied to Arc");
 
     let mut renderer = RayTracer::new(cli_config.width, cli_config.height);
+    renderer.set_tp_size(cli_config.nthreads);
     renderer.set_active_camera(Arc::new(cam));
     renderer.update(cli_config.width, cli_config.height);
     println!("updated renderer and camera");
