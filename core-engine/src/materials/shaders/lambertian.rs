@@ -1,11 +1,12 @@
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
 use crate::geometry::HitPayload;
 use crate::sampler::Sampler;
 
 use super::BxDF;
-// use super::ScatterRecord
 
+#[derive(Serialize, Deserialize)]
 pub struct Lambertian {
     pub albedo: Vec3,
     pub emission_color: Vec3,

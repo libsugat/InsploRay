@@ -22,30 +22,32 @@ pub enum BVHNode {
 }
 
 impl AccelerationStructure for BVHNode {
-    fn build(scene: &Scene) -> Option<Self> {
+    fn build(scene: &mut Scene) -> Option<Self> {
         // Flatten all triangles from all meshes into Geometry objects
-        let mut primitives: Vec<Triangle> = Vec::new();
-        for mesh in &scene.meshes {
-            for tri in &mesh.triangles {
-                primitives.push(tri.clone()); 
+        if let Some(meshes) = scene.meshes.take() {
+
+            let mut primitives: Vec<Triangle> = Vec::new();
+            for mesh in meshes {
+                primitives.extend(mesh.triangles);
             }
-        }
 
-        if primitives.len() == 0 {
-            return None;
-        }
+            if primitives.len() == 0 {
+                return None;
+            }
 
-        Some(
-            Self::build_recursive(primitives)
-        )
+            Some(
+                Self::build_recursive(primitives)
+            )
+        }
+        else {
+            None
+        }
     }
 
     fn traverse(&self, ray: &Ray) -> Option<HitPayload> {
         match self {
             BVHNode::Leaf { bounds, primitives } => {
-                if bounds.intersect(ray).is_none() {
-                    return None;
-                }
+                bounds.intersect(ray)?;
 
                 let mut hit_distance = f32::MAX;
                 let mut closest_hit: Option<HitPayload> = None;
@@ -65,9 +67,8 @@ impl AccelerationStructure for BVHNode {
                 closest_hit
             },
             BVHNode::Internal { bounds, left, right } => {
-                if bounds.intersect(ray).is_none() {
-                    return None;
-                }
+                bounds.intersect(ray)?;
+                
 
                 let left_hit = left.traverse(ray);
                 let right_hit = right.traverse(ray);

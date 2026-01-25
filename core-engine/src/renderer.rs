@@ -2,7 +2,7 @@ use std::sync::{Arc};
 use std::time::{Duration, Instant};
 
 use crossbeam::channel::Receiver;
-use glam::{Vec3};
+use glam::{Vec3, Vec4};
 
 use crate::accumulators::{Accumulator, TileAccumulator};
 use crate::cameras::{PinholeCamera, SharedCamera, SharedCameraBox};
@@ -34,6 +34,10 @@ impl RayTracer {
         };
 
         exr.save_to_files(path);
+    }
+    // pub getBuffer form acum
+    pub fn get_output_buffer(&self) -> Vec<Vec4> {
+        self.accumulator.get_buffer()
     }
 
     pub fn set_tp_size(&mut self, threads: usize) {

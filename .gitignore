@@ -7,5 +7,5 @@ settings/
 
 # Ignore Outputs of cli
 outputs/
-**/perf.data
-**/perf.data.old
+perf.*
+heaptrack.*

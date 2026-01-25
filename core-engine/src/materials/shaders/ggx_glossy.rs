@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
 use crate::geometry::HitPayload;
 use crate::sampler::Sampler;
@@ -9,6 +10,7 @@ use crate::utils::{transform_local_to_world};
 use super::BxDF;
 
 // TODO : Fix the Gloss BSDF it is actually not correct
+#[derive(Serialize, Deserialize)]
 pub struct Glossy {
     pub base_color: Vec3,
     pub roughness: f32,

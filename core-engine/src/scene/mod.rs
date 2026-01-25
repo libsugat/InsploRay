@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::sync::Arc;
 
 use glam::Vec3;
 
@@ -8,15 +7,16 @@ use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::lighting::Skybox;
+use crate::materials::shaders::BxDFImpl;
 use crate::materials::shaders::ggx_glossy::Glossy;
 use crate::materials::{DeltaGlass, Material};
 
 #[derive(Default)]
 pub struct Scene {
     pub spheres: Vec<Sphere>,
-    pub meshes: Vec<Mesh>,
+    pub meshes: Option<Vec<Mesh>>,
 
-    pub materials: Vec<Arc<Material>>,
+    pub materials: Vec<Material>,
     pub default_sky_color: Vec3,
 
     pub skybox: Option<Skybox>,
@@ -66,10 +66,10 @@ impl Scene {
                 // ior: 1.33
                 // roughness: 0.568
             };
-            let mat = Arc::new(Material {
-                shaders: vec![Arc::new(mat_6_bsdf)],
+            let mat = Material {
+                shaders: vec![BxDFImpl::DeltaGass(mat_6_bsdf)],
                 weights: vec![1.0],
-            });
+            };
             scene.materials.push(mat);
             let sphere_1 = Sphere {
                 position: Vec3::new(0.0, 1.0, 0.0),
@@ -100,7 +100,7 @@ impl Scene {
                     });
                 });
 
-                self.meshes = meshes;
+                self.meshes = Some(meshes);
 
                 Ok(())
             },

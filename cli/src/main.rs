@@ -1,91 +1,31 @@
-use std::f32::consts::PI;
-use std::sync::Arc;
-use std::time::Instant;
-
 use clap::Parser;
 
-use insploray::renderer::RayTracer;
-use insploray_cli::CliConfig;
+use mpi::{traits::*};
 
-use insploray::Vec3;
-use insploray::cameras::PinholeCamera;
-use insploray::scene::{Scene, obj_loader};
+use insploray_cli::{CliConfig, load_scene, mpi::{master::run_master, worker::run_worker}, non_cluster_render};
 
 fn main() {
-    // parse_args();
-    // load_scene();
-    // build_camera();
-    // create_renderer();
-    // create_scheduler();
-    // render();
-    // write_exr();
+    let cores = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1);
+
+    let universe = mpi::initialize().unwrap();
+    let world = universe.world();
+    let size = world.size();
+    let rank = world.rank();
 
     let cli_config = CliConfig::parse();
 
-    let position = Vec3::new(9.5, 2.25, 0.0);
-    let cam = PinholeCamera::new(
-        position,
-        Vec3::new(0.0, PI / 2.0, 0.0),
-        // Vec3::new(0.0, PI / 2.0 , PI),
-        // Vec3::ZERO,
-        50.0,
-        36.0,
-        [cli_config.width, cli_config.height],
-    );
-
-    let mut scene = Scene {
-        spheres: vec![],
-        materials: vec![],
-        default_sky_color: 0.031 * Vec3::ONE,
-
-        ..Default::default()
-    };
-
-    match &cli_config.input_file_path {
-        Some(file) => {
-            println!("Trying loading {}", file);
-            match obj_loader::load_from_file(&file) {
-                Ok((meshes, materials)) => {
-                    scene.meshes = meshes;
-                    scene.materials = materials;
-                    println!("Scene loaded successfully..");
-                }
-                Err(e) => {
-                    println!("Error loading scene : {}", e);
-                }
-            }
-        },
-        None => {
-            scene = Scene::get_example_scene();
+    if size == 1 {
+        let (scene, cam) = load_scene(&cli_config);
+        non_cluster_render(&cli_config, cores, scene, cam);
+    }
+    else {
+        if rank == 0 {
+            run_master(&world, &cli_config);
+        }
+        else {
+            run_worker(&world, rank, cores as u32);
         }
     }
-    
-    println!("Building BVH");
-    scene.build_bvh();
-    println!("Building BVH Done");
-
-    let arc_scene = Arc::new(scene);
-    println!("Copied to Arc");
-
-    let mut renderer = RayTracer::new(cli_config.width, cli_config.height);
-    renderer.set_tp_size(cli_config.nthreads);
-    renderer.set_active_camera(Arc::new(cam));
-    renderer.update(cli_config.width, cli_config.height);
-    println!("updated renderer and camera");
-
-    let start_instance = Instant::now();
-
-    for i in 0..cli_config.samples {
-        print!("Sample no: {}; ", i+1);
-        use std::io::{Write};
-        std::io::stdout().flush().unwrap();
-        renderer.render(&arc_scene);
-        println!("{:?}", renderer.get_last_render_time());
-        print!("{:3}% Done \t", (i * 100)/cli_config.samples);
-    }
-
-    let time_elapsed = start_instance.elapsed();
-    renderer.save_exr(&cli_config.output);
-
-    println!("Rendering took took {time_elapsed:?}");
 }

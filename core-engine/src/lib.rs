@@ -1,4 +1,3 @@
-pub(crate) mod accumulators;
 pub(crate) mod concurrency;
 pub(crate) mod integrator;
 pub(crate) mod ray;
@@ -12,6 +11,7 @@ pub mod materials;
 pub mod geometry;
 pub mod scene;
 pub mod acceleration_structure;
+pub mod accumulators;
 pub mod lighting;
 
 use std::ops::Index;
@@ -21,6 +21,9 @@ use ray::Ray;
 
 pub use glam::Vec2;
 pub use glam::Vec3;
+pub use glam::Vec4;
+
+pub use bytemuck::cast_slice;
 
 pub mod consts {
     pub const EPSILON : f32 = f32::EPSILON;
@@ -30,7 +33,7 @@ pub mod consts {
 pub struct ImageBuffer<PixelData> {
     width: usize,
     height: usize,
-    pub buffer: Vec<PixelData>
+    buffer: Vec<PixelData>
 }
 
 impl<PixelData: Copy + Default> ImageBuffer<PixelData> {
@@ -91,3 +94,4 @@ impl<PixelData: Copy + Default> IndexMut<(usize, usize)> for ImageBuffer<PixelDa
         &mut self.buffer[y * self.width + x]
     }
 }
+

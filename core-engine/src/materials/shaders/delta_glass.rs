@@ -1,10 +1,12 @@
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
 use crate::geometry::HitPayload;
 use crate::sampler::Sampler;
 
 use super::BxDF;
 
+#[derive(Serialize, Deserialize)]
 pub struct DeltaGlass {
     pub base_color: Vec3,
     pub ior: f32, // Index of Refraction

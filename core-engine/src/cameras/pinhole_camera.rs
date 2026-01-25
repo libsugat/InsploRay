@@ -1,9 +1,11 @@
 use glam::{Mat4, Vec2, Vec3, Vec4Swizzles};
+use serde::{Deserialize, Serialize};
 
 pub use super::Camera;
 use crate::Ray;
 
 #[derive(Debug, Default, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct PinholeCamera {
     pub position: Vec3,
     pub rotation: Vec3, // [x, y, z] Eular rotation in radians
@@ -18,6 +20,8 @@ pub struct PinholeCamera {
     pub forward: Vec3,
     pub up: Vec3,
     pub right: Vec3,
+
+    #[serde(skip)]
     ray_cache: Vec<Ray>,
 
     pub fov: f32, // again radians, optained by focal length and sensor size

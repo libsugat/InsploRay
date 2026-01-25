@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::acceleration_structure::{bvh::BVHNode, AABB};
 use crate::geometry::{Geometry, HitPayload, Triangle};
 use crate::scene::Scene;
@@ -6,11 +8,13 @@ use crate::Ray;
 use super::AccelerationStructure;
 
 #[repr(C)]
-enum NodeType {
+#[derive(Serialize, Deserialize, Debug)]
+pub enum NodeType {
     InnerNode,
     Leaf
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct BVH {
     node_type: Vec<NodeType>,
     bounds: Vec<AABB>,
@@ -23,7 +27,7 @@ pub struct BVH {
 }
 
 impl AccelerationStructure for BVH {
-    fn build(scene: &Scene) -> Option<Self> {
+    fn build(scene: &mut Scene) -> Option<Self> {
         let mut bvh = BVH {
             node_type: vec![],
             bounds: vec![],
@@ -33,10 +37,7 @@ impl AccelerationStructure for BVH {
             prims_start: vec![],
             prims_count: vec![],
         };
-        let root = match BVHNode::build(scene) {
-            Some(root) => root,
-            None => return None,
-        };
+        let root = BVHNode::build(scene)?;
 
         let res = bvh.build_recursive(&root);
         assert_eq!(res, 0);
@@ -51,13 +52,12 @@ impl AccelerationStructure for BVH {
         let mut closest_hit: Option<HitPayload> = None;
 
         while let Some(idx) = stack.pop() {
+            let node = &self.node_type[idx];
 
-            let node = self.node_type.get(idx).unwrap();
             match node {
                 NodeType::Leaf => {
-                    let (start, count) = unsafe {
-                        (*self.prims_start.get_unchecked(idx), *self.prims_count.get_unchecked(idx))
-                    };
+                    let start = self.prims_start[idx];
+                    let count = self.prims_count[idx];
 
                     let prims = &self.prims[start..start + count];
                     for prim in prims.iter() {
@@ -75,11 +75,11 @@ impl AccelerationStructure for BVH {
                     }
                 },
                 NodeType::InnerNode => {
-                    let left = self.left.get(idx).unwrap().clone();
-                    let right = self.right.get(idx).unwrap().clone();
+                    let left = self.left[idx];
+                    let right = self.right[idx];
 
-                    let left_bounds = self.bounds.get(left).clone().unwrap();
-                    let right_bounds = self.bounds.get(right).clone().unwrap();
+                    let left_bounds = &self.bounds[left];
+                    let right_bounds = &self.bounds[right];
 
                     match (left_bounds.intersect(ray), right_bounds.intersect(ray)) {
                         (None, None) => (),
@@ -106,6 +106,10 @@ impl AccelerationStructure for BVH {
 }
 
 impl BVH {
+    pub fn len_nodes(&self) -> usize {
+        self.node_type.len()
+    }
+
     fn build_recursive(&mut self, root:&BVHNode) -> usize {
         let index = self.node_type.len();
         match root {
@@ -140,3 +144,4 @@ impl BVH {
         }
     }
 }
+

@@ -13,8 +13,8 @@ pub struct Accumulator {
 }
 
 impl Accumulator {
-    pub fn _get_buffer(&self) -> ImageBuffer<Vec4> {
-        self.image_buffer.clone()
+    pub fn get_buffer(&self) -> Vec<Vec4> {
+        self.image_buffer.buffer.clone()
     }
 
     pub fn new(width: u32, height: u32) -> Self {

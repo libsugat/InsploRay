@@ -1,10 +1,12 @@
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
 use crate::scene::Scene;
 use crate::Ray;
 use crate::geometry::HitPayload;
 
 #[derive(Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize)]
 pub struct AABB {
     pub min: Vec3,
     pub max: Vec3
@@ -60,13 +62,12 @@ impl AABB {
 }
 
 pub trait AccelerationStructure {
-    fn build(scene: &Scene) -> Option<Self>
+    fn build(scene: &mut Scene) -> Option<Self>
     where 
         Self: Sized;
     fn traverse(&self, ray: &Ray) -> Option<HitPayload>;
 }
 
 pub mod bvh;
-// pub type BVH = bvh::BVHNode;
 pub mod bvh_array;
 pub use bvh_array::BVH;

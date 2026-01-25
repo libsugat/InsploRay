@@ -1,4 +1,5 @@
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
 use crate::consts;
 use crate::geometry::HitPayload;
@@ -6,6 +7,7 @@ use crate::sampler::Sampler;
 
 use super::BxDF;
 
+#[derive(Serialize, Deserialize)]
 pub struct IdealMirror {
     pub base_color: Vec3,
 }

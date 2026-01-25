@@ -1,7 +1,7 @@
-use std::sync::Arc;
-
 use glam::Vec3;
+use serde::{Deserialize, Serialize};
 
+use crate::materials::shaders::BxDFImpl;
 use crate::{geometry::HitPayload, ray::Ray, sampler::Sampler};
 
 pub struct ScatterRecord {
@@ -29,8 +29,9 @@ pub trait BxDF {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Material {
-    pub shaders: Vec<Arc<dyn BxDF + Send + Sync>>,
+    pub shaders: Vec<BxDFImpl>,
     pub weights: Vec<f32>
 }
 

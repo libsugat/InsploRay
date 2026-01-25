@@ -1,13 +1,12 @@
-use std::sync::Arc;
-
 use glam::Vec3;
 
 use crate::geometry::{Mesh, Triangle};
 use crate::materials::Material;
+use crate::materials::shaders::BxDFImpl;
 
 use tobj::{Mesh as TobjMesh, Material as TobjMaterial};
 
-pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<dyn std::error::Error>> {
+pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Material>), Box<dyn std::error::Error>> {
 
     // Load the OBJ file (single-threaded, no material loading)
     let (models, tobj_materials_res) = tobj::load_obj(
@@ -19,11 +18,11 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<
         },
     )?;
 
-    let mut materials: Vec<Arc<Material>> = Vec::new();
+    let mut materials: Vec<Material> = Vec::new();
     if let Ok(tobj_materials) = tobj_materials_res {
         for mat in tobj_materials {
             let material = convert_material(&mat);
-            materials.push(Arc::new(material));
+            materials.push(material);
         }
     }
 
@@ -94,7 +93,7 @@ fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
     };
 
     Material {
-        shaders: vec![Arc::new(bxdf)],
+        shaders: vec![BxDFImpl::Lambertian(bxdf)],
         weights: vec![1.0]
     }
 }

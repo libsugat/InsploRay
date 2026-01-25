@@ -5,6 +5,14 @@ use crate::{file_formats::ExrImage, ray::Ray, ImageBuffer};
 pub struct Skybox(ImageBuffer<Vec3>);
 
 impl Skybox {
+    pub fn get_buffer(&self) -> Vec<Vec3> {
+        self.0.buffer.clone()
+    }
+
+    pub fn get_dimensions(&self) -> [u32; 2] {
+        self.0.get_dimensions()
+    }
+
     pub fn light_in_dir(&self, ray: &Ray) -> Vec3 {
         let dir = ray.direction;
         let theta = dir.y.clamp(-1.0, 1.0).acos();
@@ -20,5 +28,10 @@ impl Skybox {
 
     pub fn load_for_exr(exr: &ExrImage) -> Self {
         Self(exr.rgb.clone())
+    }
+    
+    pub fn from_vec3_buff(buf: Vec<Vec3>, [width, height]: [u32;2]) -> Self {
+        assert_eq!(buf.len() as u32, width * height);
+        Self(ImageBuffer { width: width as usize, height: height as usize, buffer: buf })
     }
 }

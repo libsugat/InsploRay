@@ -1,4 +1,5 @@
 use glam::{Vec2, Vec3};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::acceleration_structure::AABB;
 use crate::{Ray, consts};
@@ -94,4 +95,29 @@ impl Geometry for Triangle {
     }
 }
 
+impl Serialize for Triangle {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        (&self.v0, &self.v1, &self.v2, &self.normal, &self.material_id).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Triangle {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let (v0, v1, v2, normal, material_id) =
+            <(Vec3, Vec3, Vec3, Vec3, i32)>::deserialize(deserializer)?;
+        Ok(Triangle {
+            v0,
+            v1,
+            v2,
+            normal,
+            material_id,
+        })
+    }
+}
 

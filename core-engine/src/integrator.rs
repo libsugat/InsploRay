@@ -1,13 +1,12 @@
-use std::sync::Arc;
-
 use glam::{Vec3, Vec4};
 
 use crate::acceleration_structure::AccelerationStructure;
+use crate::materials::shaders::BxDFImpl;
 use crate::{Ray, consts};
 use crate::cameras::Camera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
-use crate::materials::{Material, Lambertian};
+use crate::materials::{Material};
 
 use crate::geometry::{Geometry, HitPayload};
 
@@ -32,10 +31,10 @@ impl Integrator {
 
         let mut light = Vec3::ZERO;
 
-        let default_material: Arc<Material> = Arc::new(Material {
-            shaders : vec![Arc::new(Lambertian::default())],
+        let default_material: Material = Material {
+            shaders : vec![BxDFImpl::default()],
             weights : vec![1.0]
-        });
+        };
         
         let mut contribution = Vec3::ONE;
         for bounce in 0..self.bounces {

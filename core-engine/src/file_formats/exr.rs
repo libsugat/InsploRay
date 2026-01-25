@@ -39,18 +39,6 @@ impl ExrImage {
     }
 
     pub fn save_to_files(&self, path: &str) {
-        
-        // fn vec3_to_planes(v: &[Vec3]) -> [Vec<f32>; 3] {
-        //     let mut x = Vec::with_capacity(v.len());
-        //     let mut y = Vec::with_capacity(v.len());
-        //     let mut z = Vec::with_capacity(v.len());
-        //     for c in v {
-        //         x.push(c.x);
-        //         y.push(c.y);
-        //         z.push(c.z);
-        //     }
-        //     [x, y, z]
-        // }
 
         // let rgba_planes = vec3_to_planes(self.rgb.buffer.as_slice());
         // let alpha = vec![1.0f32; self.rgb.width * self.rgb.height];
