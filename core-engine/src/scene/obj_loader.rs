@@ -55,14 +55,7 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<
                 mesh.positions[3 * i2 + 2],
             );
 
-            triangles.push(Triangle::new((v0, v1, v2), match mesh.material_id {
-                None => {
-                    -1
-                },
-                Some(mat_id) => {
-                    mat_id as i32
-                }
-            }));
+            triangles.push(Triangle::new((v0, v1, v2), mesh.material_id));
         }
 
         meshes.push(Mesh::new(model.name, triangles));

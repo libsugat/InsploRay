@@ -8,13 +8,14 @@ use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::lighting::Skybox;
-use crate::materials::shaders::ggx_glossy::Glossy;
-use crate::materials::{DeltaGlass, Material};
+use crate::materials::{DeltaGlass, GGXMetal, Material};
 
 #[derive(Default)]
 pub struct Scene {
     pub spheres: Vec<Sphere>,
-    pub meshes: Vec<Mesh>,
+
+    // let bvh builder consume, it so that memery uses remain low does not spike
+    pub meshes: Option<Vec<Mesh>>,
 
     pub materials: Vec<Arc<Material>>,
     pub default_sky_color: Vec3,
@@ -53,7 +54,7 @@ impl Scene {
 
         println!("Material : {:?}", scene.materials.len());
         {
-            let _mat_1_bsdf = Glossy {
+            let _mat_1_bsdf = GGXMetal {
                 // base_color: Vec3::new(1.0, 0.637328, 0.301854),
                 base_color: Vec3::ONE,
                 roughness: 0.5
@@ -61,11 +62,9 @@ impl Scene {
             let index = scene.materials.len();
             let mat_6_bsdf = DeltaGlass {
                 base_color: Vec3::new(0.281158, 0.635935, 0.801516),
-                // base_color: Vec3::ONE,
                 ior: 1.45
-                // ior: 1.33
-                // roughness: 0.568
             };
+
             let mat = Arc::new(Material {
                 shaders: vec![Arc::new(mat_6_bsdf)],
                 weights: vec![1.0],
@@ -88,19 +87,19 @@ impl Scene {
     pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
         match obj_loader::load_from_file(path) {
             Ok((mut meshes, materials)) => {
-                let size = self.materials.len() as i32;
+                let size = self.materials.len();
                 self.materials.extend(materials);
 
                 meshes.iter_mut().for_each(|mesh| {
                     mesh.triangles.iter_mut().for_each(|triangle| {
                         match triangle.material_id {
-                            -1 => (),
-                            id => triangle.material_id = id + size
+                            None => (),
+                            Some(id) => triangle.material_id = Some(id + size)
                         }
                     });
                 });
 
-                self.meshes = meshes;
+                self.meshes = Some(meshes);
 
                 Ok(())
             },

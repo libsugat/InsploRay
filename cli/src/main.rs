@@ -4,6 +4,7 @@ use std::time::Instant;
 
 use clap::Parser;
 
+use insploray::materials::{GGXMetal, Material};
 use insploray::renderer::RayTracer;
 use insploray_cli::CliConfig;
 
@@ -12,7 +13,6 @@ use insploray::cameras::PinholeCamera;
 use insploray::scene::{Scene, obj_loader};
 
 fn main() {
-    // parse_args();
     // load_scene();
     // build_camera();
     // create_renderer();
@@ -20,6 +20,7 @@ fn main() {
     // render();
     // write_exr();
 
+    // parse_args();
     let cli_config = CliConfig::parse();
 
     let position = Vec3::new(9.5, 2.25, 0.0);
@@ -46,7 +47,7 @@ fn main() {
             println!("Trying loading {}", file);
             match obj_loader::load_from_file(&file) {
                 Ok((meshes, materials)) => {
-                    scene.meshes = meshes;
+                    scene.meshes = Some(meshes);
                     scene.materials = materials;
                     println!("Scene loaded successfully..");
                 }
@@ -59,10 +60,11 @@ fn main() {
             scene = Scene::get_example_scene();
         }
     }
-    
+
     println!("Building BVH");
     scene.build_bvh();
     println!("Building BVH Done");
+    // scene.spheres.push(insploray::geometry::Sphere { position: Vec3::new(0.0, 4.25, 0.0), radius: 0.2, material_id: -1 });
 
     let arc_scene = Arc::new(scene);
     println!("Copied to Arc");
@@ -81,7 +83,7 @@ fn main() {
         std::io::stdout().flush().unwrap();
         renderer.render(&arc_scene);
         println!("{:?}", renderer.get_last_render_time());
-        print!("{:3}% Done \t", (i * 100)/cli_config.samples);
+        print!("{:3}% Done \t", ((i+1) * 100)/cli_config.samples);
     }
 
     let time_elapsed = start_instance.elapsed();

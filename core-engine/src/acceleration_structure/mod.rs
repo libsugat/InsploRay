@@ -60,7 +60,7 @@ impl AABB {
 }
 
 pub trait AccelerationStructure {
-    fn build(scene: &Scene) -> Option<Self>
+    fn build(scene: &mut Scene) -> Option<Self>
     where 
         Self: Sized;
     fn traverse(&self, ray: &Ray) -> Option<HitPayload>;

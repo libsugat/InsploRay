@@ -20,6 +20,10 @@ impl DeltaGlass {
 }
 
 impl BxDF for DeltaGlass {
+    fn is_transmissive(&self) -> bool {
+        true
+    }
+
     fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3) {
         let ior = if hit_record.back_hit {
             self.ior

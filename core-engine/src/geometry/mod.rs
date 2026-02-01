@@ -14,7 +14,7 @@ pub struct HitPayload {
     pub material_index: Option<usize>,
 
     // incase of Triangle
-    pub uv: Option<Vec2>,
+    pub uv: Vec2,
 }
 
 pub trait Geometry {

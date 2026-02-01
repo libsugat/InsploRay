@@ -23,7 +23,8 @@ pub struct BVH {
 }
 
 impl AccelerationStructure for BVH {
-    fn build(scene: &Scene) -> Option<Self> {
+    fn build(scene: &mut Scene) -> Option<Self> {
+
         let mut bvh = BVH {
             node_type: vec![],
             bounds: vec![],
@@ -33,10 +34,7 @@ impl AccelerationStructure for BVH {
             prims_start: vec![],
             prims_count: vec![],
         };
-        let root = match BVHNode::build(scene) {
-            Some(root) => root,
-            None => return None,
-        };
+        let root = BVHNode::build(scene)?;
 
         let res = bvh.build_recursive(&root);
         assert_eq!(res, 0);
@@ -45,19 +43,19 @@ impl AccelerationStructure for BVH {
 
     fn traverse(&self, ray: &Ray) -> Option<HitPayload> {
         let mut stack = Vec::with_capacity(64);
-        stack.push(0);
+        stack.push((0, f32::MAX));
 
         let mut hit_distance = f32::MAX;
         let mut closest_hit: Option<HitPayload> = None;
 
-        while let Some(idx) = stack.pop() {
+        while let Some((idx, t)) = stack.pop() {
+            if t > hit_distance {continue};
 
             let node = self.node_type.get(idx).unwrap();
             match node {
                 NodeType::Leaf => {
-                    let (start, count) = unsafe {
-                        (*self.prims_start.get_unchecked(idx), *self.prims_count.get_unchecked(idx))
-                    };
+                    let start = self.prims_start[idx];
+                    let count = self.prims_count[idx];
 
                     let prims = &self.prims[start..start + count];
                     for prim in prims.iter() {
@@ -75,22 +73,22 @@ impl AccelerationStructure for BVH {
                     }
                 },
                 NodeType::InnerNode => {
-                    let left = self.left.get(idx).unwrap().clone();
-                    let right = self.right.get(idx).unwrap().clone();
+                    let left = self.left[idx];
+                    let right = self.right[idx];
 
-                    let left_bounds = self.bounds.get(left).clone().unwrap();
-                    let right_bounds = self.bounds.get(right).clone().unwrap();
+                    let left_bounds = &self.bounds[left];
+                    let right_bounds = &self.bounds[right];
 
                     match (left_bounds.intersect(ray), right_bounds.intersect(ray)) {
                         (None, None) => (),
-                        (Some((_,_)), None) => { stack.push(left);},
-                        (None, Some((_, _))) => { stack.push(right);},
+                        (Some((t,_)), None) => { stack.push((left, t));},
+                        (None, Some((t, _))) => { stack.push((right, t));},
                         (Some((tl, _)), Some((tr, _))) => {
                             let (far, near) = if tl < tr {
-                                (right, left)
+                                ((right, tr), (left, tl))
                             }
                             else {
-                                (left, right)
+                                ((left, tl), (right, tr))
                             };
 
                             stack.push(far);

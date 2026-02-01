@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3};
+use glam::Vec3;
 
 use crate::acceleration_structure::AABB;
 use crate::{Ray, consts};
@@ -10,12 +10,13 @@ pub struct Triangle {
     pub v1: Vec3,
     pub v2: Vec3,
 
+    pub material_id : Option<usize>,
+
     normal: Vec3,
-    pub material_id : i32,
 }
 
 impl Triangle {
-    pub fn new((v0, v1, v2):(Vec3, Vec3, Vec3), matrial: i32) -> Self {
+    pub fn new((v0, v1, v2):(Vec3, Vec3, Vec3), matrial: Option<usize>) -> Self {
         let normal = (v1 - v0).cross(v2 - v0).normalize();
         Self { v0, v1, v2, normal, material_id : matrial}
     }
@@ -50,21 +51,14 @@ impl Geometry for Triangle {
             (-self.normal, true)
         };
 
-        let material = if self.material_id < 0 {
-            None
-        }
-        else {
-            Some(self.material_id as usize)
-        };
-
         Some(
             HitPayload {
                 hit_distance: t,
                 world_position : ray.origin + t * ray.direction,
                 world_normal: n,
-                material_index: material,
+                // world_normal : self.normal,
+                material_index: self.material_id,
 
-                uv : Some(Vec2::new(u, v)),
                 back_hit,
                 ..Default::default()
             }

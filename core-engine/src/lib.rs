@@ -23,7 +23,7 @@ pub use glam::Vec2;
 pub use glam::Vec3;
 
 pub mod consts {
-    pub const EPSILON : f32 = f32::EPSILON;
+    pub const EPSILON : f32 = f32::EPSILON * 10.0;
 }
 
 #[derive(Default, Debug, Clone)]

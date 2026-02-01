@@ -17,7 +17,7 @@ pub struct ScatterRecord {
 
 pub trait BxDF {
     fn is_delta(&self) -> bool { false }
-    // fn is_transmissive(&self) -> bool { false }
+    fn is_transmissive(&self) -> bool { false }
     
     fn sample_direction(&self, wo:Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3);
     // (wi, shading_normal)
@@ -56,7 +56,7 @@ impl Material {
 
         let mut sum:f32 = 0.0;
         for i in 0..self.shaders.len() {
-        sum += self.weights[i];
+            sum += self.weights[i];
             if random_num < sum {
                 let (wi, n) = self.shaders[i].sample_direction(wo, hit_record, sampler);
                 let f = self.shaders[i].eval(wi, wo, hit_record);
@@ -73,7 +73,6 @@ impl Material {
                     emission,
                     is_delta,
                     shading_normal: n,
-                    // is_transmission,
                     selection_pdf: p,
                 };
             }
@@ -97,8 +96,24 @@ impl Material {
             selection_pdf,
             emission: bxdf.emission(hit_record),
             is_delta: bxdf.is_delta(),
-            // is_transmission: bxdf.is_transmissive()
         }
+    }
+
+    pub fn sample_brdf(&self, sampler: &mut Sampler) -> Arc<dyn BxDF> {
+        let weight_sum: f32 = self.weights.iter().sum();
+        let random_num = sampler.next_f32() * weight_sum;
+
+        let mut acum = 0.0;
+        let mut i = 0usize;
+        for w in &self.weights {
+            acum += w;
+            if acum > random_num {
+                break;
+            }
+            i += 1;
+        }
+
+        self.shaders[i].clone()
     }
 }
 

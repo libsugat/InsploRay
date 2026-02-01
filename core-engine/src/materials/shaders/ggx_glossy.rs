@@ -16,27 +16,33 @@ pub struct Glossy {
 
 impl BxDF for Glossy {
     fn sample_direction(&self, wo: Vec3, hit_record: &HitPayload, sampler: &mut Sampler) -> (Vec3, Vec3) {
-        let r1 = sampler.next_f32();
-        let r2 = sampler.next_f32();
+        let mut wi = Vec3::ZERO;
 
-        let alpha = self.roughness * self.roughness;
-        let alpha2 = (alpha * alpha).max(0.0001);
+        // TODO : Move to VNDF (Visual ndf)
+        while wi.dot(hit_record.world_normal) <= 0.0 {
+            let r1 = sampler.next_f32();
+            let r2 = sampler.next_f32();
 
-        let cos_theta = ((1.0 - r1) / (1.0 + (alpha2 - 1.0) * r1)).sqrt();
-        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-        let phi = 2.0 * PI * r2;
+            let alpha = self.roughness * self.roughness;
+            let alpha2 = (alpha * alpha).max(0.000001);
 
-        
-        let h_local = Vec3::new(
-            sin_theta * phi.cos(),
-            sin_theta * phi.sin(),
-            cos_theta,
-        );
+            let cos_theta = ((1.0 - r1) / (1.0 + (alpha2 - 1.0) * r1)).sqrt();
+            let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+            let phi = 2.0 * PI * r2;
 
-        let h_world = transform_local_to_world(h_local, hit_record.world_normal).normalize();
+
+            let h_local = Vec3::new(
+                sin_theta * phi.cos(),
+                sin_theta * phi.sin(),
+                cos_theta,
+            );
+
+            let h_world = transform_local_to_world(h_local, hit_record.world_normal).normalize();
+            wi = (-wo).reflect(h_world).normalize();
+        }
 
         (
-            (-wo).reflect(h_world).normalize(),
+            wi,
             hit_record.world_normal
         )
     }
@@ -93,7 +99,8 @@ impl Glossy {
 
     // frensel Term or F term
     fn fresnel_schlick(&self, wi: Vec3, h: Vec3) -> Vec3 {
-        let f_0 = self.base_color;
+        // let f_0 = self.base_color;
+        let f_0 = 0.04;
         // f_0 + (1.0 - f_0) * (1.0 - wi.dot(h).max(0.0)).powi(5)
         f_0 + (Vec3::ONE - f_0) * (1.0 - wi.dot(h).max(0.0)).powi(5)
     }

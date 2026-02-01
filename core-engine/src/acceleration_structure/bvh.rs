@@ -22,13 +22,14 @@ pub enum BVHNode {
 }
 
 impl AccelerationStructure for BVHNode {
-    fn build(scene: &Scene) -> Option<Self> {
+    fn build(scene: &mut Scene) -> Option<Self> {
         // Flatten all triangles from all meshes into Geometry objects
+        let mut meshes = scene.meshes.take().unwrap();
+        scene.meshes = None;
         let mut primitives: Vec<Triangle> = Vec::new();
-        for mesh in &scene.meshes {
-            for tri in &mesh.triangles {
-                primitives.push(tri.clone()); 
-            }
+
+        while let Some(mesh) = meshes.pop() {
+            primitives.extend(mesh.triangles);
         }
 
         if primitives.len() == 0 {
