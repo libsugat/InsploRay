@@ -1,16 +1,27 @@
 use glam::{Vec2, Vec3};
-use rand::{Rng, prelude::ThreadRng};
+use rand::{Rng, SeedableRng};
+use rand::rngs::SmallRng;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::utils::transform_local_to_world;
 
 pub struct Sampler {
-    rng: ThreadRng,
+    rng: SmallRng,
 }
 
-
 impl Sampler {
+    /// Platform-portable default constructor
     pub fn new() -> Self {
-        Self { rng: rand::rng() }
+        let seed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
+
+        Self::with_seed(seed)
+    }
+
+    pub fn with_seed(seed: u64) -> Self {
+        Self { rng: SmallRng::seed_from_u64(seed) }
     }
 
     #[inline]
@@ -40,10 +51,17 @@ impl Sampler {
 
         let x = r * phi.cos();
         let y = r * phi.sin();
-        let z = (1.0 - u1).sqrt(); // correct!
+        let z = (1.0 - u1).sqrt();
 
         let local_dir = Vec3::new(x, y, z);
 
         transform_local_to_world(local_dir, normal)
     }
 }
+
+impl Default for Sampler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

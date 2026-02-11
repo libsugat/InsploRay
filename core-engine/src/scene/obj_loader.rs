@@ -18,6 +18,34 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Material>), Box<dyn s
         },
     )?;
 
+    process_tobj_result(models, tobj_materials_res)
+}
+
+pub fn load_from_buf(
+    obj_data: &mut &[u8],
+    mtl_data: &[u8],
+) -> Result<(Vec<Mesh>, Vec<Material>), Box<dyn std::error::Error>> {
+
+    let mtl_bytes = mtl_data.to_vec(); // must own inside closure
+
+    let (models, tobj_materials_res) = tobj::load_obj_buf(
+        obj_data,
+        &tobj::LoadOptions {
+            triangulate: true,
+            single_index: true,
+            ..Default::default()
+        },
+        move |_path| {
+            // Provide the MTL contents manually
+            let mut slice: &[u8] = &mtl_bytes;
+            tobj::load_mtl_buf(&mut slice)
+        }
+    )?;
+
+    process_tobj_result(models, tobj_materials_res)
+}
+
+fn process_tobj_result(models: Vec<tobj::Model>, tobj_materials_res: Result<Vec<TobjMaterial>, tobj::LoadError>) -> Result<(Vec<Mesh>, Vec<Material>), Box<dyn std::error::Error>> {
     let mut materials: Vec<Material> = Vec::new();
     if let Ok(tobj_materials) = tobj_materials_res {
         for mat in tobj_materials {
@@ -97,3 +125,4 @@ fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
         weights: vec![1.0]
     }
 }
+

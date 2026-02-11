@@ -11,7 +11,9 @@ exr = "1.73.0"
 glam = { version = "0.31.0", features = ["mint", "serde", "bytemuck"] }
 gltf = "1.4.1"
 pollster = "0.4.0"
-rand = "0.9.1"
+rand = { version = "0.9.1", features = ["small_rng"], default-features = false }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 tobj = "4.0.3"
 serde = { version = "1.0.228", features = ["derive"] }
+
 
