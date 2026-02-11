@@ -1,8 +1,9 @@
 pub(crate) mod concurrency;
-pub(crate) mod integrator;
 pub(crate) mod ray;
-pub(crate) mod sampler;
 pub(crate) mod utils;
+
+pub mod integrator;
+pub mod sampler;
 
 pub mod file_formats;
 pub mod cameras;
@@ -26,7 +27,7 @@ pub use glam::Vec4;
 pub use bytemuck::cast_slice;
 
 pub mod consts {
-    pub const EPSILON : f32 = f32::EPSILON;
+    pub const EPSILON : f32 = f32::EPSILON * 10.0;
 }
 
 #[derive(Default, Debug, Clone)]
