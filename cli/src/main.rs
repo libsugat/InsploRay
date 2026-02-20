@@ -61,10 +61,22 @@ fn main() {
         }
     }
 
+    let mat_1_bsdf = GGXMetal {
+        base_color: Vec3::new(0.229786, 0.8004, 0.658289),
+        // base_color: Vec3::new(0.800, 0.435, 0.080),
+        roughness: 0.4
+    };
+
+    let mat = Arc::new(Material {
+        shaders: vec![Arc::new(mat_1_bsdf)],
+        weights: vec![1.0],
+    });
+
+    scene.materials[3] = mat;
+
     println!("Building BVH");
     scene.build_bvh();
     println!("Building BVH Done");
-    // scene.spheres.push(insploray::geometry::Sphere { position: Vec3::new(0.0, 4.25, 0.0), radius: 0.2, material_id: -1 });
 
     let arc_scene = Arc::new(scene);
     println!("Copied to Arc");

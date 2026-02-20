@@ -102,7 +102,7 @@ impl Integrator {
         bxdf: &Arc<dyn BxDF>) -> Vec3 {
 
         // Direct Lighting
-        let ligth_intensity = 5.0;
+        let ligth_intensity = 100.0;
         let light_pos = Vec3::new(2.0, 4.0, 0.0);
         let mut light_dir = hit.world_position - light_pos;
         let distance_from_light = light_dir.length();

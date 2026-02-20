@@ -56,7 +56,6 @@ impl Geometry for Triangle {
                 hit_distance: t,
                 world_position : ray.origin + t * ray.direction,
                 world_normal: n,
-                // world_normal : self.normal,
                 material_index: self.material_id,
 
                 back_hit,

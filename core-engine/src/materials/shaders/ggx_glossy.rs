@@ -1,3 +1,4 @@
+use core::f32;
 use std::f32::consts::PI;
 
 use glam::Vec3;
@@ -62,7 +63,10 @@ impl BxDF for Glossy {
 
         let ggx_f = d * g * f / (4.0 *  ndotwo * ndotwi);
 
-        ggx_f * self.base_color
+        let diffuse_comp = self.base_color * (1.0 - f) / PI;
+
+        // ggx_f
+        ggx_f * self.base_color + diffuse_comp
     }
 
     fn pdf(&self, wi: Vec3, wo: Vec3, hit_record: &HitPayload) -> f32 {
@@ -99,9 +103,7 @@ impl Glossy {
 
     // frensel Term or F term
     fn fresnel_schlick(&self, wi: Vec3, h: Vec3) -> Vec3 {
-        // let f_0 = self.base_color;
         let f_0 = 0.04;
-        // f_0 + (1.0 - f_0) * (1.0 - wi.dot(h).max(0.0)).powi(5)
         f_0 + (Vec3::ONE - f_0) * (1.0 - wi.dot(h).max(0.0)).powi(5)
     }
 }

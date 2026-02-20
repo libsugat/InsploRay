@@ -8,6 +8,7 @@ use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::lighting::Skybox;
+use crate::materials::shaders::ggx_glossy::Glossy;
 use crate::materials::{DeltaGlass, GGXMetal, Material};
 
 #[derive(Default)]
@@ -54,19 +55,19 @@ impl Scene {
 
         println!("Material : {:?}", scene.materials.len());
         {
-            let _mat_1_bsdf = GGXMetal {
+            let mat_1_bsdf = Glossy {
                 // base_color: Vec3::new(1.0, 0.637328, 0.301854),
                 base_color: Vec3::ONE,
-                roughness: 0.5
+                roughness: 0.2
             };
             let index = scene.materials.len();
-            let mat_6_bsdf = DeltaGlass {
+            let _mat_6_bsdf = DeltaGlass {
                 base_color: Vec3::new(0.281158, 0.635935, 0.801516),
                 ior: 1.45
             };
 
             let mat = Arc::new(Material {
-                shaders: vec![Arc::new(mat_6_bsdf)],
+                shaders: vec![Arc::new(mat_1_bsdf)],
                 weights: vec![1.0],
             });
             scene.materials.push(mat);
