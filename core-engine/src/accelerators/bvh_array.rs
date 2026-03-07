@@ -1,4 +1,4 @@
-use crate::acceleration_structure::{bvh::BVHNode, AABB};
+use crate::accelerators::{bvh::BVHNode, AABB};
 use crate::geometry::{Geometry, HitPayload, Triangle};
 use crate::scene::Scene;
 use crate::Ray;
@@ -41,7 +41,7 @@ impl AccelerationStructure for BVH {
         Some(bvh)
     }
 
-    fn traverse(&self, ray: &Ray) -> Option<HitPayload> {
+    fn intersect(&self, ray: &Ray) -> Option<HitPayload> {
         let mut stack = Vec::with_capacity(64);
         stack.push((0, f32::MAX));
 

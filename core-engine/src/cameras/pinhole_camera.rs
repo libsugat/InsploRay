@@ -1,6 +1,6 @@
 use glam::{Mat4, Vec2, Vec3, Vec4Swizzles};
 
-pub use super::Camera;
+pub use crate::base::Camera;
 use crate::Ray;
 
 #[derive(Debug, Default, Clone)]
@@ -98,11 +98,7 @@ impl PinholeCamera {
                 .transform_vector3(ray_direction)
                 .normalize();
 
-        Ray {
-            origin: self.position,
-            direction: ray_dir_global,
-            inv_d: 1.0 / ray_dir_global
-        }
+        crate::new_ray!(self.position, ray_dir_global)
     }
 
 }

@@ -3,18 +3,17 @@ use std::sync::Arc;
 
 use glam::Vec3;
 
-use crate::acceleration_structure::{AccelerationStructure, BVH};
+use crate::accelerators::{AccelerationStructure, BVH};
 use crate::file_formats::ExrImage;
 
 use crate::geometry::{Mesh, Sphere};
 use crate::lighting::Skybox;
 use crate::materials::shaders::ggx_glossy::Glossy;
-use crate::materials::{DeltaGlass, GGXMetal, Material};
+use crate::materials::{DeltaGlass, Material};
 
 #[derive(Default)]
 pub struct Scene {
     pub spheres: Vec<Sphere>,
-
     // let bvh builder consume, it so that memery uses remain low does not spike
     pub meshes: Option<Vec<Mesh>>,
 
@@ -22,12 +21,15 @@ pub struct Scene {
     pub default_sky_color: Vec3,
 
     pub skybox: Option<Skybox>,
-    pub bvh : Option<BVH>
+    pub bvh : Option<Arc<dyn AccelerationStructure + Sync + Send>>
+    // pub bvh : Option<BVH>
 }
 
 impl Scene {
+
+
     // This is just something this is not what i want to use, its being used for test
-    // consider following code as a config file that changes like like a commond in cli
+    // consider following code as a config file that changes like a command in cli
     pub fn get_example_scene() -> Self {
         let skybox = match ExrImage::load_exr_image("./assets/env/default_skybox_1_.exr") {
             Err(e) => {
@@ -82,7 +84,13 @@ impl Scene {
     }
 
     pub fn build_bvh(&mut self) {
-        self.bvh = BVH::build(self);
+        self.bvh = if let Some(bvh) = BVH::build(self) {
+            Some(Arc::new(bvh))
+        }
+        else {
+            None
+        }
+        // self.bvh = BVH::build(self);
     }
 
     pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {

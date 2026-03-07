@@ -1,6 +1,6 @@
 use glam::Vec3;
 
-use crate::{acceleration_structure::AABB, geometry::{Geometry, HitPayload, Triangle}, ray::Ray};
+use crate::{accelerators::AABB, geometry::{Geometry, HitPayload, Triangle}, ray::Ray};
 
 pub struct Mesh {
     pub name: String,

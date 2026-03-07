@@ -3,10 +3,9 @@ use std::sync::Arc;
 
 use glam::{Vec3, Vec4};
 
-use crate::acceleration_structure::AccelerationStructure;
 use crate::consts::EPSILON;
 use crate::{Ray, consts};
-use crate::cameras::Camera;
+use crate::base::Camera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
 use crate::materials::{BxDF, Lambertian, Material};
@@ -73,7 +72,10 @@ impl Integrator {
             // Indirect Lighting
             let scatter_data = material.scatter(&ray, &hit, sampler);
 
+            // Add emissive light
             light += scatter_data.emission * contribution;
+
+            // now calculate the contribution
             let cos_theta = scatter_data.wi.dot(scatter_data.shading_normal).max(0.0);
             contribution *= scatter_data.f;
             if !scatter_data.is_delta {
@@ -88,18 +90,18 @@ impl Integrator {
                 contribution /= p;
             }
 
-            ray.origin = hit.world_position + scatter_data.shading_normal * consts::EPSILON;
-            ray.direction = scatter_data.wi;
-            ray.inv_d = 1.0 / scatter_data.wi;
+            ray = crate::new_ray!(hit.world_position + scatter_data.shading_normal * consts::EPSILON, scatter_data.wi);
         }
         Vec4::from((light, 1.0))
     }
 
-    fn compute_direct_light(&self,
+    fn compute_direct_light(
+        &self,
         ray: &Ray,
         scene: &Scene,
         hit : &HitPayload,
-        bxdf: &Arc<dyn BxDF>) -> Vec3 {
+        bxdf: &Arc<dyn BxDF>
+    ) -> Vec3 {
 
         // Direct Lighting
         let ligth_intensity = 100.0;
@@ -108,11 +110,7 @@ impl Integrator {
         let distance_from_light = light_dir.length();
         light_dir = light_dir.normalize();
 
-        let shadow_ray = Ray {
-            origin: hit.world_position + hit.world_normal * EPSILON,
-            direction: -light_dir,
-            inv_d: -1.0 / light_dir
-        };
+        let shadow_ray = crate::new_ray!(hit.world_position + hit.world_normal * EPSILON, light_dir);
 
         let is_light_visible = match self.trace_ray(&shadow_ray, scene) {
             None => true,
@@ -160,7 +158,7 @@ impl Integrator {
         }
 
         if let Some(bvh) = &scene.bvh {
-            if let Some(payload) = bvh.traverse(ray) {
+            if let Some(payload) = bvh.intersect(ray) {
                 if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
                     closest_hit = Some(payload);
                 }

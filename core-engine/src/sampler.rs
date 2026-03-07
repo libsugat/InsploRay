@@ -7,7 +7,6 @@ pub struct Sampler {
     rng: ThreadRng,
 }
 
-
 impl Sampler {
     pub fn new() -> Self {
         Self { rng: rand::rng() }

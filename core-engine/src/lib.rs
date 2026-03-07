@@ -1,7 +1,9 @@
+pub mod base;
+
+pub(crate) mod ray;
 pub(crate) mod accumulators;
 pub(crate) mod concurrency;
 pub(crate) mod integrator;
-pub(crate) mod ray;
 pub(crate) mod sampler;
 pub(crate) mod utils;
 
@@ -11,7 +13,7 @@ pub mod renderer;
 pub mod materials;
 pub mod geometry;
 pub mod scene;
-pub mod acceleration_structure;
+pub mod accelerators;
 pub mod lighting;
 
 use std::ops::Index;

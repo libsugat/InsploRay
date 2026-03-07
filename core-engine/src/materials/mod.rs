@@ -4,6 +4,16 @@ use glam::Vec3;
 
 use crate::{geometry::HitPayload, ray::Ray, sampler::Sampler};
 
+pub type BxDFType = u32;
+
+pub const BSDF_REFLECTION: BxDFType = 1 << 0; //1
+pub const BSDF_TRANSMISSION: BxDFType = 1 << 1; //2
+pub const BSDF_DIFFUSE: BxDFType = 1 << 2; //4
+pub const BSDF_GLOSSY: BxDFType = 1 << 3; //8
+pub const BSDF_SPECULAR: BxDFType = 1 << 4; //16
+pub const BSDF_ALL: BxDFType =
+    BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR;
+
 pub struct ScatterRecord {
     pub wi: Vec3,
     pub shading_normal: Vec3,
@@ -27,6 +37,7 @@ pub trait BxDF {
     fn emission(&self, _hit_record: &HitPayload) -> Vec3 {
         Vec3::ZERO
     }
+
 }
 
 pub struct Material {

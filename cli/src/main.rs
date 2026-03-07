@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use clap::Parser;
 
-use insploray::materials::{GGXMetal, Material};
+use insploray::materials::{DeltaGlass, GGXMetal, Material};
 use insploray::renderer::RayTracer;
 use insploray_cli::CliConfig;
 
@@ -61,10 +61,16 @@ fn main() {
         }
     }
 
-    let mat_1_bsdf = GGXMetal {
-        base_color: Vec3::new(0.229786, 0.8004, 0.658289),
+    // let mat_1_bsdf = GGXMetal {
+    //     base_color: Vec3::new(0.229786, 0.8004, 0.658289),
+    //     // base_color: Vec3::new(0.800, 0.435, 0.080),
+    //     roughness: 0.4
+    // };
+    let mat_1_bsdf = DeltaGlass {
+        base_color: Vec3::new(1.0, 1.0, 1.0),
         // base_color: Vec3::new(0.800, 0.435, 0.080),
-        roughness: 0.4
+        // roughness: 0.4
+        ior: 1.3333
     };
 
     let mat = Arc::new(Material {

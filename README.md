@@ -93,7 +93,7 @@ Feel free to ask questions, suggest changes, or just explore the code!
 ## 🔜 My Side Plans
 Order unknown because I am BTech student unable to manage my time corrently....
 - [x] Ray Triangle Intersection
-- [x] Loading Scene (.obj`)
+- [x] Loading Scene (`.obj`)
 - [ ] Loading Scene (`.glb`/`.gltf`)
 - [ ] Specular BRDF
 - [x] Metallic BRDF (Isotropic)

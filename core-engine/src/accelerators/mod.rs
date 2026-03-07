@@ -1,16 +1,17 @@
 use glam::Vec3;
 
 use crate::scene::Scene;
-use crate::Ray;
+use crate::{Ray, consts};
 use crate::geometry::HitPayload;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct AABB {
     pub min: Vec3,
     pub max: Vec3
 }
 
 impl AABB {
+    #[inline(always)]
     pub fn empty() -> Self {
         AABB {
             min: Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
@@ -18,11 +19,43 @@ impl AABB {
         }
     }
 
+    #[inline(always)]
     pub fn union_box(b1: Self, b2: Self) -> Self {
         AABB {
             min: b1.min.min(b2.min),
             max: b1.max.max(b2.max)
         }
+    }
+
+    #[inline(always)]
+    pub fn union(b: Self, p: Vec3) -> Self {
+        AABB {
+            min: b.min.min(p - consts::EPSILON),
+            max: b.max.max(p + consts::EPSILON)
+        }
+    }
+
+    #[inline(always)]
+    pub fn offset(&self, p: Vec3) -> Vec3{
+        let mut o = p - self.min;
+        if self.max.x > self.min.x {
+            o.x /= self.max.x - self.min.x;
+        }
+        if self.max.y > self.min.y {
+            o.y /= self.max.y - self.min.y;
+        }
+        if self.max.z > self.min.z {
+            o.z /= self.max.z - self.min.z;
+        }
+
+        o
+    }
+
+    
+    #[inline(always)]
+    pub fn max_dim(&self) -> usize {
+        let extent = self.max - self.min;
+        extent.max_position()
     }
 
     #[inline(always)]
@@ -59,11 +92,17 @@ impl AABB {
     }
 }
 
+impl Default for AABB {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 pub trait AccelerationStructure {
     fn build(scene: &mut Scene) -> Option<Self>
     where 
         Self: Sized;
-    fn traverse(&self, ray: &Ray) -> Option<HitPayload>;
+    fn intersect(&self, ray: &Ray) -> Option<HitPayload>;
 }
 
 pub mod bvh;

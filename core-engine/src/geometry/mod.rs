@@ -1,7 +1,7 @@
 use glam::{Vec2, Vec3};
 
 use crate::Ray;
-use crate::acceleration_structure::AABB;
+use crate::accelerators::AABB;
 
 #[derive(Default, Debug)]
 pub struct HitPayload {
@@ -10,7 +10,6 @@ pub struct HitPayload {
     pub world_normal: Vec3,
     pub back_hit: bool,
 
-    pub object_index: Option<usize>,
     pub material_index: Option<usize>,
 
     // incase of Triangle

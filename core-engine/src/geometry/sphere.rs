@@ -1,6 +1,6 @@
 use glam::Vec3;
 
-use crate::acceleration_structure::AABB;
+use crate::accelerators::AABB;
 use crate::geometry::{Geometry, HitPayload};
 use crate::{Ray};
 

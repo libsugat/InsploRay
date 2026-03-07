@@ -4,7 +4,7 @@ use imgui::Ui;
 
 use insploray::renderer::RayTracer;
 use insploray::scene::Scene;
-use insploray::cameras::Camera;
+use insploray::base::Camera;
 use insploray::cameras::PinholeCamera;
 use insploray::Vec3;
 
