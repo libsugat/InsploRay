@@ -16,7 +16,6 @@ pub struct Viewport {
 }
 
 impl Viewport {
-
     pub fn set_dimensions(&mut self, width : u32, height : u32) {
         self.dimensions = [width, height];
         if self.renderer.get_current_size() != self.dimensions {
@@ -32,7 +31,7 @@ impl Viewport {
         self.renderer.get_output()
     }
 
-    pub fn draw_scene_setting_window(&mut self, ui : &Ui, _viewport_size: &[f32; 2]) {
+    pub fn draw_scene_setting_window(&mut self, ui : &Ui) {
 
         ui.window("Scene Settings")
             .size([300.0, 400.0], imgui::Condition::FirstUseEver)

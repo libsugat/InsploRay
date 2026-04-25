@@ -13,7 +13,10 @@ pub struct Threadpool {
 impl Threadpool {
     pub fn new(size: usize) -> (Self, Receiver<RenderJobResult>) {
         assert!(size > 0);
-        let (job_tx, job_rx) = crossbeam::channel::unbounded::<RenderJob>();
+        let (
+            job_tx,
+            job_rx)
+        = crossbeam::channel::unbounded::<RenderJob>();
 
         let (result_tx, result_rx) = crossbeam::channel::unbounded();
 
@@ -45,13 +48,10 @@ impl Drop for Threadpool {
         if let Some(job_tx) = self.job_tx.take() {
             drop(job_tx);
         }
-        self.workers
-            .iter_mut()
-            .enumerate()
-            .for_each(|(id, worker)| {
-                worker.join();
-                println!("Worker {} has shut down.", id);
-            });
+        for worker in &mut self.workers {
+            worker.join_and_stop();
+            println!("Worker has shut down.");
+        }
         println!("RenderThreadpool has been dropped. All workers shut down.");
     }
 }

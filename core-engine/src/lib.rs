@@ -6,6 +6,7 @@ pub(crate) mod concurrency;
 pub(crate) mod integrator;
 pub(crate) mod sampler;
 pub(crate) mod utils;
+pub(crate) mod interations;
 
 pub mod file_formats;
 pub mod cameras;
@@ -16,6 +17,9 @@ pub mod scene;
 pub mod accelerators;
 pub mod lighting;
 
+// Being experimented With
+pub mod bxdfs;
+
 use std::ops::Index;
 use std::ops::IndexMut;
 
@@ -23,6 +27,7 @@ use ray::Ray;
 
 pub use glam::Vec2;
 pub use glam::Vec3;
+pub use glam::Vec4;
 
 pub mod consts {
     pub const EPSILON : f32 = f32::EPSILON * 10.0;

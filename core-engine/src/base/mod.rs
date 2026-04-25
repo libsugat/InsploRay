@@ -16,7 +16,7 @@ pub use camera::*;
 // pub use primitive::*;
 // pub use sampler::*;
 // pub use filter::*;
-// pub use bxdf::*;
+pub use bxdf::*;
 // pub use material::*;
 // pub use light::*;
 // pub use light_sampler::*;

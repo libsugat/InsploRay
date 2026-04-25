@@ -18,7 +18,7 @@ pub struct PinholeCamera {
     pub forward: Vec3,
     pub up: Vec3,
     pub right: Vec3,
-    ray_cache: Vec<Ray>,
+    // ray_cache: Vec<Ray>,
 
     pub fov: f32, // again radians, optained by focal length and sensor size
 }
@@ -73,20 +73,12 @@ impl PinholeCamera {
         self.local_to_world
     }
 
-    fn generate_ray_cache(&mut self) {
-        for y in 0..self.image_size[1] {
-            for x in 0..self.image_size[0] {
-                self.ray_cache.push(self.generate_ray(x, y));
-            }
-        }
-    }
-
-    fn generate_ray(&self, x: u32, y: u32) -> Ray {
+    fn generate_ray(&self, x: u32, y: u32, u2: Vec2) -> Ray {
         let &[width, height] = &self.image_size;
 
         let mut vec = Vec2::new(
-            (x as f32 + 0.5) / width as f32,
-            (y as f32 + 0.5) / height as f32,
+            (x as f32 + u2.x) / width as f32,
+            (y as f32 + u2.y) / height as f32,
         );
 
         vec = (vec * 2.0 - 1.0) * (self.fov / 2.0).tan();
@@ -105,13 +97,14 @@ impl PinholeCamera {
 
 impl Camera for PinholeCamera {
     /// this function generated ray directly from world space of camera for performance reason
-    fn get_ray(&self, x: u32, y: u32) -> Ray {
-        match self.ray_cache.get((y * self.image_size[0] + x) as usize) {
-            Some(ray) => ray.clone(),
-            None => {
-                self.generate_ray(x, y)
-            },
-        }
+    fn get_ray(&self, x: u32, y: u32, u2: Vec2) -> Ray {
+        // match self.ray_cache.get((y * self.image_size[0] + x) as usize) {
+        //     Some(ray) => ray.clone(),
+        //     None => {
+        //         self.generate_ray(x, y)
+        //     },
+        // }
+        self.generate_ray(x, y, u2)
     }
 
 
@@ -149,7 +142,6 @@ impl Camera for PinholeCamera {
         self.compute_fov();
         self.compute_transformation_matrix();
         self.compute_camera_directions();
-        self.generate_ray_cache();
     }
 }
 

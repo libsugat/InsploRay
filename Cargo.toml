@@ -5,3 +5,6 @@ members = [
     "core-engine",
     "frontend"
 ]
+# default-members = [
+#     "cli"
+# ]

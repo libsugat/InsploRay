@@ -1,5 +1,5 @@
 use glam::{Vec2, Vec3};
-use rand::{Rng, prelude::ThreadRng};
+use rand::{RngExt, prelude::ThreadRng};
 
 use crate::utils::transform_local_to_world;
 
@@ -17,11 +17,11 @@ impl Sampler {
         self.rng.random::<f32>()
     }
 
-    pub fn _next_2d(&mut self) -> Vec2 {
+    pub fn next_2d(&mut self) -> Vec2 {
         Vec2::new(self.next_f32(), self.next_f32())
     }
 
-    pub fn _vec_3(&mut self, min: f32, max: f32) -> Vec3 {
+    pub fn vec_3(&mut self, min: f32, max: f32) -> Vec3 {
         let range = max - min;
         Vec3::new(
             self.next_f32() * range + min,

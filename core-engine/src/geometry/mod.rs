@@ -22,11 +22,13 @@ pub trait Geometry {
     fn centroid(&self) -> Vec3;
 }
 
-pub mod sphere;
+pub mod shapes;
+
+mod sphere;
 pub use sphere::Sphere;
 
-pub mod triangle;
+mod triangle;
 pub use triangle::Triangle;
 
-pub mod mesh;
+mod mesh;
 pub use mesh::Mesh;

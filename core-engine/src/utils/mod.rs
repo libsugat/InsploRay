@@ -1,4 +1,10 @@
-use glam::{Vec3, Vec4};
+pub mod sampling;
+pub mod math;
+use crate::{Vec3, Vec4};
+
+pub fn same_hemisphere(w: Vec3, wp: Vec3) -> bool {
+    w.z * wp.z > 0.0
+}
 
 /// Converts 0.0 to 1.0 to u32 in format 0xAARRGGBB
 pub(super) fn convert_to_argb(color: &Vec4) -> u32 /* Results Color */ {

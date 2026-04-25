@@ -66,7 +66,7 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<
 
 fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {
     let emmissive = mat.unknown_param.get("Ke");
-    let bxdf = crate::materials::Lambertian {
+    let bxdf = crate::materials::shaders::Lambertian {
         // name: mat.name.clone(),
         albedo: match mat.diffuse {
             None => Vec3::ONE,

@@ -8,9 +8,8 @@ license = "AGPL-3.0"
 bytemuck = { version = "1.23.1", features = ["derive"] }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 exr = "1.73.0"
-glam = { version = "0.31.0", features = ["mint", "serde"] }
-gltf = "1.4.1"
+glam = { version = "0.32.1", features = ["mint", "serde"] }
 pollster = "0.4.0"
-rand = "0.9.1"
+rand = "0.10.0"
 tobj = "4.0.3"
 

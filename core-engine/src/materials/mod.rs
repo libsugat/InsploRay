@@ -4,16 +4,6 @@ use glam::Vec3;
 
 use crate::{geometry::HitPayload, ray::Ray, sampler::Sampler};
 
-pub type BxDFType = u32;
-
-pub const BSDF_REFLECTION: BxDFType = 1 << 0; //1
-pub const BSDF_TRANSMISSION: BxDFType = 1 << 1; //2
-pub const BSDF_DIFFUSE: BxDFType = 1 << 2; //4
-pub const BSDF_GLOSSY: BxDFType = 1 << 3; //8
-pub const BSDF_SPECULAR: BxDFType = 1 << 4; //16
-pub const BSDF_ALL: BxDFType =
-    BSDF_REFLECTION | BSDF_TRANSMISSION | BSDF_DIFFUSE | BSDF_GLOSSY | BSDF_SPECULAR;
-
 pub struct ScatterRecord {
     pub wi: Vec3,
     pub shading_normal: Vec3,
@@ -40,6 +30,7 @@ pub trait BxDF {
 
 }
 
+#[derive(Default)]
 pub struct Material {
     pub shaders: Vec<Arc<dyn BxDF + Send + Sync>>,
     pub weights: Vec<f32>
@@ -65,49 +56,37 @@ impl Material {
         let weight_sum: f32 = self.weights.iter().sum();
         let random_num = sampler.next_f32() * weight_sum;
 
+        let mut indx = self.shaders.len() - 1;
+
         let mut sum:f32 = 0.0;
         for i in 0..self.shaders.len() {
             sum += self.weights[i];
             if random_num < sum {
-                let (wi, n) = self.shaders[i].sample_direction(wo, hit_record, sampler);
-                let f = self.shaders[i].eval(wi, wo, hit_record);
-                let pdf = self.shaders[i].pdf(wi, wo, hit_record);
-                let emission = self.shaders[i].emission(hit_record);
-                let is_delta = self.shaders[i].is_delta();
-                // let is_transmission = self.shaders[i].is_transmissive();
-                
-                let p = self.weights[i] / weight_sum;
-                return ScatterRecord {
-                    wi,
-                    f,
-                    pdf,
-                    emission,
-                    is_delta,
-                    shading_normal: n,
-                    selection_pdf: p,
-                };
+                indx = i;
+                break;
             }
         }
 
         // just an edge case if the generated number is greater than the total weighted sum
         // fallback: pick the last lobe
-        let last = self.shaders.len() - 1;
-        let bxdf = &self.shaders[last];
 
-        let (wi, shading_normal) = bxdf.sample_direction(wo, hit_record, sampler);
-        let f = bxdf.eval(wo, wi, hit_record);
-        let pdf = bxdf.pdf(wo, wi, hit_record);
-        let selection_pdf = self.weights[last] / weight_sum;
+        let (wi, n) = self.shaders[indx].sample_direction(wo, hit_record, sampler);
+        let f = self.shaders[indx].eval(wi, wo, hit_record);
+        let pdf = self.shaders[indx].pdf(wi, wo, hit_record);
+        let emission = self.shaders[indx].emission(hit_record);
+        let is_delta = self.shaders[indx].is_delta();
+        // let is_transmission = self.shaders[i].is_transmissive();
 
-        ScatterRecord {
+        let p = self.weights[indx] / weight_sum;
+        return ScatterRecord {
             wi,
-            shading_normal,
             f,
             pdf,
-            selection_pdf,
-            emission: bxdf.emission(hit_record),
-            is_delta: bxdf.is_delta(),
-        }
+            emission,
+            is_delta,
+            shading_normal: n,
+            selection_pdf: p,
+        };
     }
 
     pub fn sample_brdf(&self, sampler: &mut Sampler) -> Arc<dyn BxDF> {
@@ -129,8 +108,4 @@ impl Material {
 }
 
 pub mod shaders;
-
-pub use shaders::lambertian::Lambertian;
-pub use shaders::metal::IdealMirror;
-pub use shaders::ggx_metal::GGXMetal;
-pub use shaders::delta_glass::DeltaGlass;
+pub use shaders::*;

@@ -39,9 +39,9 @@ impl RenderingWorker {
         }
     }
 
-    pub fn join(&mut self) {
+    pub fn join_and_stop(&mut self) {
         if let Some(thread) = self.thread.take() {
-            let _ = thread.join();
+            let _ = thread.join().unwrap();
         }
     }
 }

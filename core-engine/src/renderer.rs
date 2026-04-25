@@ -16,6 +16,7 @@ pub struct RayTracer {
     height: u32,
     frame_buffer: Vec<u32>,
     last_render_time: Duration,
+    tile_size: u32,
 
     pub active_camera: SharedCamera,
     integrator: Integrator,
@@ -67,6 +68,7 @@ impl RayTracer {
         Self {
             width: 0,
             height: 0,
+            tile_size: 32,
             frame_buffer: vec![],
             active_camera: Arc::new(camera),
             last_render_time: Duration::from_secs(0),
@@ -107,10 +109,13 @@ impl RayTracer {
         }
     }
 
+    pub fn set_tile_size(&mut self, tile_size: u32) {
+        self.tile_size = tile_size;
+    }
+
     fn dispatch_tile_render_job(
         &mut self,
         scene: &Arc<Scene>,
-        tile_size: u32,
         tile_x: u32,
         tile_y: u32,
     ) -> bool {
@@ -126,8 +131,8 @@ impl RayTracer {
         let local_scene = Arc::clone(scene);
 
         // Compute tile bounds
-        let tile_width = (tile_size).min(self.width - tile_x);
-        let tile_height = (tile_size).min(self.height - tile_y);
+        let tile_width = (self.tile_size).min(self.width - tile_x);
+        let tile_height = (self.tile_size).min(self.height - tile_y);
 
         tp.execute(move |sampler| {
             let mut accumulator = TileAccumulator::new(tile_x, tile_y, tile_width, tile_height);
@@ -153,13 +158,12 @@ impl RayTracer {
     pub fn render(&mut self, scene: &Arc<Scene>) {
         let render_start_time = Instant::now();
 
-        let tile_size = 32;
         let mut jobs_dispached = 0;
 
-        for tile_y in (0..self.height).step_by(tile_size as usize) {
-            for tile_x in (0..self.width).step_by(tile_size as usize) {
+        for tile_y in (0..self.height).step_by(self.tile_size as usize) {
+            for tile_x in (0..self.width).step_by(self.tile_size as usize) {
                 jobs_dispached +=
-                    self.dispatch_tile_render_job(scene, tile_size, tile_x, tile_y) as u32;
+                    self.dispatch_tile_render_job(scene, tile_x, tile_y) as u32;
             }
         }
 

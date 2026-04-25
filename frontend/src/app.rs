@@ -62,7 +62,7 @@ impl App {
             let style_guard = ui.push_style_var(imgui::StyleVar::WindowPadding([0.0, 0.0]));
 
             ui.window("Viewport")
-                .size([500.0, 500.0], imgui::Condition::FirstUseEver)
+                .size([720.0, 720.0], imgui::Condition::FirstUseEver)
                 .position([0.0, 0.0], imgui::Condition::FirstUseEver)
                 .build(|| {
                     viewport_size = ui.content_region_avail();
@@ -133,7 +133,7 @@ impl App {
                     }
                 });
             
-            self.viewport.draw_scene_setting_window(ui, &viewport_size);
+            self.viewport.draw_scene_setting_window(ui);
         }
 
         let mut encoder = window

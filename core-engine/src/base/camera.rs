@@ -1,8 +1,9 @@
 use glam::Vec3;
+use crate::Vec2;
 
 use crate::ray::Ray;
 pub trait Camera : CameraClone + Send + Sync {
-    fn get_ray(&self, x: u32, y: u32) -> Ray;
+    fn get_ray(&self, x: u32, y: u32, u2: Vec2) -> Ray;
     fn set_position(&mut self, position: Vec3);
     fn set_rotation(&mut self, rotation: Vec3);
     fn get_image_resolutions(&self) -> [u32; 2];

@@ -1,19 +1,21 @@
 use std::error::Error;
+use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
 use std::sync::Arc;
 
-use glam::Vec3;
+use glam::{Mat4, Vec3};
 
 use crate::accelerators::{AccelerationStructure, BVH};
 use crate::file_formats::ExrImage;
 
-use crate::geometry::{Mesh, Sphere};
+use crate::geometry::shapes::Primitive;
+use crate::geometry::{Mesh, shapes::Sphere};
 use crate::lighting::Skybox;
-use crate::materials::shaders::ggx_glossy::Glossy;
-use crate::materials::{DeltaGlass, Material};
+use crate::materials::Lambertian;
+use crate::materials::{ Material};
 
 #[derive(Default)]
 pub struct Scene {
-    pub spheres: Vec<Sphere>,
+    pub spheres: Vec<Primitive>,
     // let bvh builder consume, it so that memery uses remain low does not spike
     pub meshes: Option<Vec<Mesh>>,
 
@@ -22,12 +24,9 @@ pub struct Scene {
 
     pub skybox: Option<Skybox>,
     pub bvh : Option<Arc<dyn AccelerationStructure + Sync + Send>>
-    // pub bvh : Option<BVH>
 }
 
 impl Scene {
-
-
     // This is just something this is not what i want to use, its being used for test
     // consider following code as a config file that changes like a command in cli
     pub fn get_example_scene() -> Self {
@@ -57,28 +56,41 @@ impl Scene {
 
         println!("Material : {:?}", scene.materials.len());
         {
-            let mat_1_bsdf = Glossy {
-                // base_color: Vec3::new(1.0, 0.637328, 0.301854),
-                base_color: Vec3::ONE,
-                roughness: 0.2
+            let mat_1_bsdf = Lambertian {
+                albedo: Vec3::new(1.0, 0.637328, 0.301854),
+                // albedo: Vec3::ONE * 0.9,
+                ..Default::default()
             };
             let index = scene.materials.len();
-            let _mat_6_bsdf = DeltaGlass {
-                base_color: Vec3::new(0.281158, 0.635935, 0.801516),
-                ior: 1.45
-            };
 
             let mat = Arc::new(Material {
                 shaders: vec![Arc::new(mat_1_bsdf)],
                 weights: vec![1.0],
             });
             scene.materials.push(mat);
-            let sphere_1 = Sphere {
-                position: Vec3::new(0.0, 1.0, 0.0),
-                radius: 1.0,
-                material_id: index as i32
-            };
-            scene.spheres.push(sphere_1);
+            // let sphere_1 = Sphere {
+            //     position: Vec3::new(0.0, 1.0, 0.0),
+            //     radius: 1.0,
+            //     material_id: index as i32
+            // };
+            let position = Vec3::new(0.0, 1.0, 0.0);
+            let mat = Mat4::from_translation(position) * Mat4::from_rotation_x(FRAC_PI_2)* Mat4::from_rotation_z(0.0) * Mat4::from_rotation_y(PI);
+            println!("{:?}", mat);
+            let mut sphere_1 = Sphere::init_default();
+            sphere_1.transform(mat);
+            // sphere_1.z_max = sphere_1.radius * 0.75;
+            // sphere_1.z_min = - sphere_1.radius * 0.75;
+            sphere_1.phi_max = FRAC_PI_4 * 1.5;
+            scene.spheres.push(Primitive {
+                shape: Arc::new(sphere_1),
+                material_id: index as u32
+            });
+
+            let x = Vec3::new(1.0, 0.0, 0.0);
+            let y = Vec3::new(0.0, 1.0, 0.0);
+            let z = x.cross(y);
+
+            println!("{:?}", z);
         }
         scene
     }
@@ -90,7 +102,6 @@ impl Scene {
         else {
             None
         }
-        // self.bvh = BVH::build(self);
     }
 
     pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
@@ -120,4 +131,3 @@ impl Scene {
 }
 
 pub mod obj_loader;
-pub mod gltf_loader;

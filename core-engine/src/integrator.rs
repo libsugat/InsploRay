@@ -8,9 +8,9 @@ use crate::{Ray, consts};
 use crate::base::Camera;
 use crate::sampler::Sampler;
 use crate::scene::Scene;
-use crate::materials::{BxDF, Lambertian, Material};
+use crate::materials::{BxDF, shaders::Lambertian, Material};
 
-use crate::geometry::{Geometry, HitPayload};
+use crate::geometry::{HitPayload};
 
 #[derive(Clone, Copy)]
 pub struct Integrator {
@@ -32,7 +32,7 @@ impl Integrator {
         camera: &dyn Camera,
         sampler: &mut Sampler,
     ) -> Vec4 /* returns radiance per RGB channel */ {
-        let mut ray = camera.get_ray(x, y);
+        let mut ray = camera.get_ray(x, y, sampler.next_2d());
 
         let mut light = Vec3::ZERO;
         let mut contribution = Vec3::ONE;
@@ -64,10 +64,10 @@ impl Integrator {
                 None => &default_material
             };
 
-            let bxdf = material.sample_brdf(sampler); 
-            if !bxdf.is_transmissive() {
-                light += contribution * self.compute_direct_light(&ray, scene, &hit, &bxdf);
-            }
+            // let bxdf = material.sample_brdf(sampler); 
+            // if !bxdf.is_transmissive() {
+            //     light += contribution * self.compute_direct_light(&ray, scene, &hit, &bxdf);
+            // }
 
             // Indirect Lighting
             let scatter_data = material.scatter(&ray, &hit, sampler);
@@ -76,8 +76,9 @@ impl Integrator {
             light += scatter_data.emission * contribution;
 
             // now calculate the contribution
-            let cos_theta = scatter_data.wi.dot(scatter_data.shading_normal).max(0.0);
+            let cos_theta = scatter_data.wi.dot(scatter_data.shading_normal).abs();
             contribution *= scatter_data.f;
+
             if !scatter_data.is_delta {
                 contribution *= cos_theta / scatter_data.pdf;
             }
@@ -99,12 +100,12 @@ impl Integrator {
         &self,
         ray: &Ray,
         scene: &Scene,
-        hit : &HitPayload,
+        hit: &HitPayload,
         bxdf: &Arc<dyn BxDF>
     ) -> Vec3 {
 
         // Direct Lighting
-        let ligth_intensity = 100.0;
+        let ligth_intensity = 10.0;
         let light_pos = Vec3::new(2.0, 4.0, 0.0);
         let mut light_dir = hit.world_position - light_pos;
         let distance_from_light = light_dir.length();
@@ -118,7 +119,7 @@ impl Integrator {
         };
 
         if !is_light_visible {
-
+            return Vec3::ZERO;
         }
 
         let f = bxdf.eval(-light_dir, -ray.direction, &hit);
@@ -146,14 +147,19 @@ impl Integrator {
         let mut closest_hit = None;
 
         for sphere in &scene.spheres {
-            if let Some(payload) = sphere.intersect_ray(ray) {
-                if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
-                    hit_distance = payload.hit_distance;
-                    closest_hit = Some(payload);
+            if let Some(interaction) = sphere.shape.intersect(ray, f32::MAX) {
+                if interaction.base.t < hit_distance {
+                    hit_distance = interaction.base.t;
+                    closest_hit = Some(HitPayload {
+                        hit_distance,
+                        world_position: interaction.base.p,
+                        world_normal: interaction.shading.n,
+                        back_hit: ray.direction.dot(interaction.base.n) > 0.0,
+                        material_index: Some(sphere.material_id as usize),
+                        uv: interaction.base.uv,
+                        ..Default::default()
+                    })
                 }
-            }
-            else {
-                continue;
             }
         }
 

@@ -24,7 +24,12 @@ pub enum BVHNode {
 impl AccelerationStructure for BVHNode {
     fn build(scene: &mut Scene) -> Option<Self> {
         // Flatten all triangles from all meshes into Geometry objects
-        let mut meshes = scene.meshes.take().unwrap();
+        let mut meshes = match scene.meshes.take() {
+            None => {
+                return None;
+            },
+            Some(x) => x
+        };
         scene.meshes = None;
         let mut primitives: Vec<Triangle> = Vec::new();
 
@@ -89,7 +94,7 @@ impl AccelerationStructure for BVHNode {
     }
 }
 
-const MAX_PRIMS_IN_NODE: usize = 15;
+const MAX_PRIMS_IN_NODE: usize = 8;
 const N_BUCKETS: usize = 64;
 
 #[derive(Default, Clone, Copy)]

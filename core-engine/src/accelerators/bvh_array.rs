@@ -42,13 +42,16 @@ impl AccelerationStructure for BVH {
     }
 
     fn intersect(&self, ray: &Ray) -> Option<HitPayload> {
-        let mut stack = Vec::with_capacity(64);
-        stack.push((0, f32::MAX));
+        let mut stack = [(0, 0.0); 32];
+        let mut stack_ptr = 0i32;
+        stack[stack_ptr as usize] = (0, f32::MAX);
 
         let mut hit_distance = f32::MAX;
         let mut closest_hit: Option<HitPayload> = None;
 
-        while let Some((idx, t)) = stack.pop() {
+        while stack_ptr > -1 {
+            let (idx, t) = stack[stack_ptr as usize];
+            stack_ptr -= 1;
             if t > hit_distance {continue};
 
             let node = self.node_type.get(idx).unwrap();
@@ -81,8 +84,14 @@ impl AccelerationStructure for BVH {
 
                     match (left_bounds.intersect(ray), right_bounds.intersect(ray)) {
                         (None, None) => (),
-                        (Some((t,_)), None) => { stack.push((left, t));},
-                        (None, Some((t, _))) => { stack.push((right, t));},
+                        (Some((t,_)), None) => {
+                            stack_ptr += 1;
+                            stack[stack_ptr as usize] = (left, t);
+                        },
+                        (None, Some((t, _))) => {
+                            stack_ptr += 1;
+                            stack[stack_ptr as usize] = (right, t);
+                        },
                         (Some((tl, _)), Some((tr, _))) => {
                             let (far, near) = if tl < tr {
                                 ((right, tr), (left, tl))
@@ -91,8 +100,10 @@ impl AccelerationStructure for BVH {
                                 ((left, tl), (right, tr))
                             };
 
-                            stack.push(far);
-                            stack.push(near);
+                            stack_ptr += 1;
+                            stack[stack_ptr as usize] = far;
+                            stack_ptr += 1;
+                            stack[stack_ptr as usize] = near;
                         }
                     }
                 }
