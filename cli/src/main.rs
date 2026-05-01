@@ -7,13 +7,13 @@ use std::time::Instant;
 use clap::Parser;
 
 use indicatif::{ProgressBar, ProgressState, ProgressStyle};
-use insploray::materials::{DeltaGlass, Material};
-use insploray::renderer::RayTracer;
-use insploray_cli::CliConfig;
 
+use insploray::renderer::RayTracer;
 use insploray::Vec3;
 use insploray::cameras::PinholeCamera;
 use insploray::scene::{Scene, obj_loader};
+
+use insploray_cli::{CliConfig, get_cpu_count};
 
 fn main() {
     // load_scene();
@@ -23,9 +23,10 @@ fn main() {
     // render();
     // write_exr();
 
-    // parse_args();
+    // Parse arguments form the command line;
     let cli_config = CliConfig::parse();
 
+    // Setup Camera
     let position = Vec3::new(9.5, 2.25, 0.0);
     let cam = PinholeCamera::new(
         position,
@@ -37,6 +38,7 @@ fn main() {
         [cli_config.width, cli_config.height],
     );
 
+    // Load Scene
     let mut scene = Scene {
         spheres: vec![],
         materials: vec![],
@@ -47,55 +49,52 @@ fn main() {
 
     match &cli_config.input_file_path {
         Some(file) => {
-            println!("Trying loading {}", file);
+            println!("Loading {}", file);
             match obj_loader::load_from_file(&file) {
-                Ok((meshes, materials)) => {
-                    scene.meshes = Some(meshes);
+                Ok((meshes, tris, materials)) => {
+                    scene.meshes = meshes;
+                    scene.tris_vec = Some(tris);
                     scene.materials = materials;
                     println!("Scene loaded successfully..");
                 }
                 Err(e) => {
                     println!("Error loading scene : {}", e);
+                    return;
                 }
             }
         },
         None => {
-            scene = Scene::get_example_scene();
+            scene = insploray::scene::get_example_scene();
         }
     }
 
-    // let mat_1_bsdf = GGXMetal {
-    //     base_color: Vec3::new(0.229786, 0.8004, 0.658289),
-    //     // base_color: Vec3::new(0.800, 0.435, 0.080),
-    //     roughness: 0.4
-    // };
-    let mat_1_bsdf = DeltaGlass {
-        base_color: Vec3::new(1.0, 1.0, 1.0),
-        // base_color: Vec3::new(0.800, 0.435, 0.080),
-        // roughness: 0.4
-        ior: 1.45
-    };
-
-    let mat = Arc::new(Material {
-        shaders: vec![Arc::new(mat_1_bsdf)],
-        weights: vec![1.0],
-    });
-    scene.materials[3] = mat;
-
+    // Build Acceleration Structure
     println!("Building BVH");
     scene.build_bvh();
     println!("Building BVH Done");
 
     let arc_scene = Arc::new(scene);
 
+    // Get Core affininty and jobs from ci
+    let cpu_count = get_cpu_count();
+    let workers = if cli_config.threads == 0 { 
+        cpu_count
+    } else {
+        cli_config.threads
+    };
+    println!("Using {} workers", workers);
+
     let mut renderer = RayTracer::new(cli_config.width, cli_config.height);
     renderer.set_tile_size(cli_config.tile);
-    renderer.set_tp_size(cli_config.nthreads);
+    renderer.set_tp_size(workers);
     renderer.set_active_camera(Arc::new(cam));
     renderer.update(cli_config.width, cli_config.height);
+    
 
     let start_instant = Instant::now();
     let last_render = Arc::new(AtomicU64::new(0.0_f64.to_bits()));
+
+    // Setup Progress Bar
     let pb = ProgressBar::new(cli_config.samples as u64);
     let last_render_clone = Arc::clone(&last_render);
     pb.set_style(
@@ -111,17 +110,20 @@ fn main() {
             })
         .progress_chars("=>_"));
 
+    // Main render loop
     for _i in 0..cli_config.samples {
         renderer.render(&arc_scene);
         let time = renderer.get_last_render_time().as_secs_f64();
         last_render.store(time.to_bits(), Ordering::Relaxed);
         pb.inc(1);
     }
-
-    let time_elapsed = start_instant.elapsed();
-    renderer.save_exr(&cli_config.output);
     pb.finish();
+    let time_elapsed = start_instant.elapsed();
+    println!("Rendering took {time_elapsed:?}");
 
-    println!("Rendering took took {time_elapsed:?}");
+    // Save the render to EXR file
+    println!("Saving to {}", cli_config.output);
+    renderer.save_exr(&cli_config.output);
+
 }
 

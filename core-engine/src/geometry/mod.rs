@@ -16,10 +16,17 @@ pub struct HitPayload {
     pub uv: Vec2,
 }
 
+mod triangle;
+pub use triangle::TriangleMesh;
+
+pub struct GeometryContext<'a> {
+    pub meshes: &'a [TriangleMesh],
+}
+
 pub trait Geometry {
-    fn intersect_ray(&self, ray: &Ray) -> Option<HitPayload>;
-    fn bounding_box(&self) -> AABB;
-    fn centroid(&self) -> Vec3;
+    fn intersect_ray(&self, ray: &Ray, ctx: &GeometryContext) -> Option<HitPayload>;
+    fn bounding_box(&self, ctx: &GeometryContext) -> AABB;
+    fn centroid(&self, ctx: &GeometryContext) -> Vec3;
 }
 
 pub mod shapes;
@@ -27,8 +34,7 @@ pub mod shapes;
 mod sphere;
 pub use sphere::Sphere;
 
-mod triangle;
 pub use triangle::Triangle;
 
-mod mesh;
-pub use mesh::Mesh;
+// mod mesh;
+// pub use mesh::Mesh;

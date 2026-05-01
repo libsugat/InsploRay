@@ -64,10 +64,10 @@ impl Integrator {
                 None => &default_material
             };
 
-            // let bxdf = material.sample_brdf(sampler); 
-            // if !bxdf.is_transmissive() {
-            //     light += contribution * self.compute_direct_light(&ray, scene, &hit, &bxdf);
-            // }
+            let bxdf = material.sample_brdf(sampler); 
+            if !bxdf.is_transmissive() {
+                light += contribution * self.compute_direct_light(&ray, scene, &hit, &bxdf);
+            }
 
             // Indirect Lighting
             let scatter_data = material.scatter(&ray, &hit, sampler);
@@ -107,7 +107,7 @@ impl Integrator {
         // Direct Lighting
         let ligth_intensity = 10.0;
         let light_pos = Vec3::new(2.0, 4.0, 0.0);
-        let mut light_dir = hit.world_position - light_pos;
+        let mut light_dir = light_pos - hit.world_position;
         let distance_from_light = light_dir.length();
         light_dir = light_dir.normalize();
 
@@ -122,9 +122,9 @@ impl Integrator {
             return Vec3::ZERO;
         }
 
-        let f = bxdf.eval(-light_dir, -ray.direction, &hit);
+        let f = bxdf.eval(light_dir, -ray.direction, &hit);
         // This only works for non transmissive rightnow
-        let cos_theta = (-light_dir).dot(hit.world_normal).max(0.0);
+        let cos_theta = (light_dir).dot(hit.world_normal).max(0.0);
 
         let li = ligth_intensity / (4.0 * PI * distance_from_light * distance_from_light);
         li * f * cos_theta
@@ -142,35 +142,6 @@ impl Integrator {
     }
 
     fn trace_ray(&self, ray: &Ray, scene: &Scene) -> Option<HitPayload> {
-
-        let mut hit_distance = f32::MAX;
-        let mut closest_hit = None;
-
-        for sphere in &scene.spheres {
-            if let Some(interaction) = sphere.shape.intersect(ray, f32::MAX) {
-                if interaction.base.t < hit_distance {
-                    hit_distance = interaction.base.t;
-                    closest_hit = Some(HitPayload {
-                        hit_distance,
-                        world_position: interaction.base.p,
-                        world_normal: interaction.shading.n,
-                        back_hit: ray.direction.dot(interaction.base.n) > 0.0,
-                        material_index: Some(sphere.material_id as usize),
-                        uv: interaction.base.uv,
-                        ..Default::default()
-                    })
-                }
-            }
-        }
-
-        if let Some(bvh) = &scene.bvh {
-            if let Some(payload) = bvh.intersect(ray) {
-                if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
-                    closest_hit = Some(payload);
-                }
-            }
-        }
-
-        closest_hit
+        scene.intersect(ray)
     }
 }

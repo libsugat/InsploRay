@@ -29,6 +29,9 @@ pub use glam::Vec2;
 pub use glam::Vec3;
 pub use glam::Vec4;
 
+pub use glam::Mat3;
+pub use glam::Mat4;
+
 pub mod consts {
     pub const EPSILON : f32 = f32::EPSILON * 10.0;
 }

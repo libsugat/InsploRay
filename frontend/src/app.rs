@@ -16,8 +16,6 @@ use crate::ui::utils::create_texture_from_pixels;
 #[derive(Default)]
 pub struct App {
     window: Option<AppWindow>,
-    // viewport_renderer: RayTracer,
-
     viewport : Viewport,
 }
 
@@ -26,7 +24,6 @@ impl App {
     {
         let window = self.window.as_mut().unwrap();
         let imgui = window.imgui.as_mut().unwrap();
-        // let delta_s = imgui.last_frame.elapsed();
         let now = Instant::now();
 
         imgui
@@ -62,8 +59,8 @@ impl App {
             let style_guard = ui.push_style_var(imgui::StyleVar::WindowPadding([0.0, 0.0]));
 
             ui.window("Viewport")
-                .size([720.0, 720.0], imgui::Condition::FirstUseEver)
-                .position([0.0, 0.0], imgui::Condition::FirstUseEver)
+                .size([500.0, 500.0], imgui::Condition::FirstUseEver)
+                .position([20.0, 20.0], imgui::Condition::FirstUseEver)
                 .build(|| {
                     viewport_size = ui.content_region_avail();
                     let width = viewport_size[0] as u32;
@@ -93,47 +90,6 @@ impl App {
                 });
 
             drop(style_guard);
-
-            ui.window("Settings")
-                .size([300.0, 200.0], imgui::Condition::FirstUseEver)
-                .position([500.0, 200.0], imgui::Condition::FirstUseEver)
-                .build(|| {
-                    let duration = self.viewport.renderer.get_last_render_time();
-
-                    let mut updated = false;
-                    ui.text(format!("Last Render : {duration:?}"));
-                    ui.text(format!("Image : {viewport_size:?}"));
-                    ui.button("Render").then(|| {
-                        updated |= true;
-                    });
-
-                    let mut focal_length = self.viewport.camera.focal_length;
-                    let mut sensor_size = self.viewport.camera.sensor_size;
-
-                    if imgui::Drag::new("Focal Length")
-                        .build(ui, &mut focal_length) && focal_length > 0.0  {
-                        // self.viewport.camera
-                        //     .set_focal_length(focal_length);
-                        // updated |= true;
-                    }
-
-                    if imgui::Drag::new("Sensor Size")
-                        .build(ui, &mut sensor_size) && sensor_size > 0.0 {
-                        // self.viewport.camera
-                        //     .set_sensor_size(sensor_size);
-                        // updated |= true;
-                    }
-                    
-                    if updated {
-                        self.viewport.renderer
-                            .update(
-                                viewport_size[0] as u32,
-                                viewport_size[1] as u32,
-                            );
-                    }
-                });
-            
-            self.viewport.draw_scene_setting_window(ui);
         }
 
         let mut encoder = window

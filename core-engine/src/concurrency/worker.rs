@@ -19,7 +19,8 @@ impl RenderingWorker {
                     Ok(job) => {
                         let acc = job(&mut sampler);
                         if let Err(e) = result_tx.send(acc) {
-                            println!(
+                            #[cfg(debug_assertions)]
+                            dbg!(
                                 "Worker {} failed to send result: receiver disconnected. Err : {:?}",
                                 id, e
                             );
@@ -27,7 +28,8 @@ impl RenderingWorker {
                         }
                     }
                     Err(_) => {
-                        println!("Worker {id} disconnected; Shutting down..");
+                        #[cfg(debug_assertions)]
+                        dbg!("Worker {id} disconnected; Shutting down..");
                         break;
                     }
                 }

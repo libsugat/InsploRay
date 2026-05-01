@@ -15,5 +15,4 @@ pub trait Shape {
     fn sample(&self, u: crate::Vec2) -> Option<ShapeSample>;
     fn pdf(&self, inter: &SurfaceInteraction) -> f32;
         // PBRT_CPU_GPU inline Float PDF(const ShapeSampleContext &ctx, Vector3f wi) const;
-
 }

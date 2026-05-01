@@ -3,12 +3,13 @@ use std::sync::Arc;
 use super::AABB;
 use super::AccelerationStructure;
 use crate::geometry::Geometry;
+use crate::geometry::GeometryContext;
 use crate::geometry::HitPayload;
 use crate::geometry::Triangle;
 use crate::ray::Ray;
 use crate::scene::Scene;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BVHNode {
     Internal {
         bounds: AABB,
@@ -24,29 +25,24 @@ pub enum BVHNode {
 impl AccelerationStructure for BVHNode {
     fn build(scene: &mut Scene) -> Option<Self> {
         // Flatten all triangles from all meshes into Geometry objects
-        let mut meshes = match scene.meshes.take() {
+        let primitives = match scene.tris_vec.take() {
             None => {
                 return None;
             },
             Some(x) => x
         };
-        scene.meshes = None;
-        let mut primitives: Vec<Triangle> = Vec::new();
-
-        while let Some(mesh) = meshes.pop() {
-            primitives.extend(mesh.triangles);
-        }
 
         if primitives.len() == 0 {
             return None;
         }
+        let g_ctx = scene.create_context();
 
         Some(
-            Self::build_recursive(primitives)
+            Self::build_recursive(primitives, &g_ctx)
         )
     }
 
-    fn intersect(&self, ray: &Ray) -> Option<HitPayload> {
+    fn intersect(&self, ray: &Ray, g_ctx: &GeometryContext) -> Option<HitPayload> {
         match self {
             BVHNode::Leaf { bounds, primitives } => {
                 if bounds.intersect(ray).is_none() {
@@ -57,7 +53,7 @@ impl AccelerationStructure for BVHNode {
                 let mut closest_hit: Option<HitPayload> = None;
 
                 for prim in primitives.iter() {
-                    if let Some(payload) = prim.intersect_ray(ray) {
+                    if let Some(payload) = prim.intersect_ray(ray, g_ctx) {
                         if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
                             hit_distance = payload.hit_distance;
                             closest_hit = Some(payload);
@@ -75,8 +71,8 @@ impl AccelerationStructure for BVHNode {
                     return None;
                 }
 
-                let left_hit = left.intersect(ray);
-                let right_hit = right.intersect(ray);
+                let left_hit = left.intersect(ray, g_ctx);
+                let right_hit = right.intersect(ray, g_ctx);
 
                 match (left_hit, right_hit) {
                     (Some(l_hit), Some(r_hit)) => {
@@ -104,7 +100,7 @@ struct SAHSplitBucket {
 }
 
 impl BVHNode {
-    fn build_recursive(mut primitives : Vec<Triangle>) -> Self {
+    fn build_recursive(mut primitives : Vec<Triangle>, g_ctx: &GeometryContext) -> Self {
         let count = primitives.len();
         if count == 0 {
              return BVHNode::Leaf {
@@ -114,9 +110,9 @@ impl BVHNode {
         }
 
         // compute AABB for all premitives
-        let mut bounds = primitives[0].bounding_box();
+        let mut bounds = primitives[0].bounding_box(g_ctx);
         for prim in &primitives[1..] {
-            bounds = AABB::union_box(bounds, prim.bounding_box());
+            bounds = AABB::union_box(bounds, prim.bounding_box(g_ctx));
         }
 
         if count <= MAX_PRIMS_IN_NODE {
@@ -125,7 +121,7 @@ impl BVHNode {
 
         let mut centroid_bound = AABB::empty();
         for prims in &primitives {
-            centroid_bound = AABB::union(centroid_bound, prims.bounding_box().centroid());
+            centroid_bound = AABB::union(centroid_bound, prims.bounding_box(g_ctx).centroid());
         }
         centroid_bound.min -= crate::consts::EPSILON;
         centroid_bound.max += crate::consts::EPSILON;
@@ -143,7 +139,7 @@ impl BVHNode {
         if primitives.len() <= 2 {
             let mid = primitives.len() / 2;
             primitives.select_nth_unstable_by(mid, |a, b| 
-                a.centroid()[axis].partial_cmp(&b.bounding_box().centroid()[axis]).unwrap()
+                a.centroid(g_ctx)[axis].partial_cmp(&b.bounding_box(g_ctx).centroid()[axis]).unwrap()
             );
         }
         else {
@@ -153,18 +149,20 @@ impl BVHNode {
             }; N_BUCKETS]; 
 
             for prim in &primitives {
-                let mut b = (N_BUCKETS_F32 * centroid_bound.offset(prim.bounding_box().centroid())[axis]).abs() as usize;
+                let mut b = (N_BUCKETS_F32 * centroid_bound.offset(
+                    prim.bounding_box(g_ctx).centroid()
+                )[axis]).abs() as usize;
                 if b == N_BUCKETS {
                     b = N_BUCKETS - 1;
                 }
                 if !(b < N_BUCKETS) {
                     println!("b: {}; coetroid_bound: {:?}; offset: {:?}\ncentroid: {:?}; axis: {};",
-                        b, centroid_bound, centroid_bound.offset(prim.bounding_box().centroid()), prim.bounding_box().centroid(), axis);
+                        b, centroid_bound, centroid_bound.offset(prim.bounding_box(g_ctx).centroid()), prim.bounding_box(g_ctx).centroid(), axis);
                     println!("b < N_BUCKETS so creating leaf");
                 }
                 assert!(b < N_BUCKETS);
                 buckets[b].count += 1;
-                buckets[b].bounds = AABB::union_box(buckets[b].bounds, prim.bounding_box());
+                buckets[b].bounds = AABB::union_box(buckets[b].bounds, prim.bounding_box(g_ctx));
             }
 
             const N_SPLITS: usize = N_BUCKETS - 1;
@@ -204,7 +202,7 @@ impl BVHNode {
                 let (right_c, left_c): (Vec<_>, Vec<_>) = primitives
                     .into_iter()
                     .partition(|a| {
-                        let mut b = (N_BUCKETS_F32 * centroid_bound.offset(a.bounding_box().centroid())[axis]) as usize;
+                        let mut b = (N_BUCKETS_F32 * centroid_bound.offset(a.bounding_box(g_ctx).centroid())[axis]) as usize;
                         if b == N_BUCKETS {
                             b = N_BUCKETS - 1;
                         }
@@ -219,10 +217,18 @@ impl BVHNode {
             }
         }
 
+        if left.is_empty() {
+            return BVHNode::Leaf { bounds, primitives: right};
+        }
+
+        if right.is_empty() {
+            return BVHNode::Leaf { bounds, primitives: left};
+        }
+
         Self::Internal {
             bounds,
-            left: Arc::new(Self::build_recursive(left)),
-            right: Arc::new(Self::build_recursive(right)),
+            left: Arc::new(Self::build_recursive(left, g_ctx)),
+            right: Arc::new(Self::build_recursive(right, g_ctx)),
         }
     }
 }

@@ -1,5 +1,11 @@
 use clap::Parser;
 
+pub fn get_cpu_count() -> usize {
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+}
+
 /// InsploRay
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -32,6 +38,6 @@ pub struct CliConfig {
     pub bounces: u32,
 
     /// No of threads to be used by the program to render image (no of cpu cores is recomended)
-    #[arg(long, default_value_t = 4)]
-    pub nthreads: usize,
+    #[arg(short = 'j', long, default_value_t = 0)]
+    pub threads: usize,
 }

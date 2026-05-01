@@ -24,7 +24,6 @@ impl ExrImage {
                 }
             },
             |exr, pos, (r, g, b, _): (f32, f32, f32, f32)| {
-                // skybox.pixels_buffer[pos.y() * skybox.width + pos.x()] = Vec3::new(r, g, b);
                 exr.rgb.set_pixel(pos.x(), pos.y(), Vec3::new(r, g, b));
             },
         );

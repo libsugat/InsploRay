@@ -1,7 +1,7 @@
 use glam::Vec3;
 
 use crate::accelerators::AABB;
-use crate::geometry::{Geometry, HitPayload};
+use crate::geometry::{Geometry, GeometryContext, HitPayload};
 use crate::{Ray};
 
 pub struct Sphere {
@@ -11,7 +11,7 @@ pub struct Sphere {
 }
 
 impl Geometry for Sphere {
-    fn intersect_ray(&self, ray :&Ray) -> Option<HitPayload> {
+    fn intersect_ray(&self, ray :&Ray, _: &GeometryContext) -> Option<HitPayload> {
         let origin = ray.origin - self.position;
 
         let a = ray.direction.dot(ray.direction);
@@ -63,7 +63,7 @@ impl Geometry for Sphere {
         )
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self, _: &GeometryContext) -> AABB {
         let bias_vec = Vec3::from((self.radius, self.radius, self.radius));
         AABB {
             min: self.position - bias_vec,
@@ -71,7 +71,7 @@ impl Geometry for Sphere {
         }
     }
 
-    fn centroid(&self) -> Vec3 {
+    fn centroid(&self, _: &GeometryContext) -> Vec3 {
         self.position
     }
 

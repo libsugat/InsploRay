@@ -2,7 +2,7 @@ use glam::Vec3;
 
 use crate::scene::Scene;
 use crate::{Ray, consts};
-use crate::geometry::HitPayload;
+use crate::geometry::{GeometryContext, HitPayload};
 
 #[derive(Clone, Copy, Debug)]
 pub struct AABB {
@@ -102,7 +102,7 @@ pub trait AccelerationStructure {
     fn build(scene: &mut Scene) -> Option<Self>
     where 
         Self: Sized;
-    fn intersect(&self, ray: &Ray) -> Option<HitPayload>;
+    fn intersect(&self, ray: &Ray, g_ctx: &GeometryContext) -> Option<HitPayload>;
 }
 
 pub mod bvh;

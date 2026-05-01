@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use imgui::Ui;
-
 use insploray::renderer::RayTracer;
 use insploray::scene::Scene;
 use insploray::base::Camera;
@@ -31,33 +29,11 @@ impl Viewport {
         self.renderer.get_output()
     }
 
-    pub fn draw_scene_setting_window(&mut self, ui : &Ui) {
-
-        ui.window("Scene Settings")
-            .size([300.0, 400.0], imgui::Condition::FirstUseEver)
-            .position([200.0, 500.0], imgui::Condition::FirstUseEver)
-            .build(|| {
-                if ui.button("Get Camera Setting") {
-                    let cam = &self.camera;
-                    println!("Camera:");
-                    println!("\tposition : {:?}", cam.position);
-                    println!("\trotation : {:?}", cam.rotation);
-                    println!("\timage_size : {:?}", cam.image_size);
-                    println!("\tfocallength : {:?}", cam.focal_length);
-                    println!("\tsensorsize : {:?}", cam.sensor_size);
-                }
-            });
-
-
-    }
-
 }
 
 impl Default for Viewport {
     fn default() -> Self {
         let position = Vec3::new(9.5, 2.25, 0.0);
-        // let position = Vec3::new(7.67618, 3.2679, 1.66982);
-        // let rotation = Vec3::new(0.0, 1.30277, 0.22899);
         let rotation = Vec3::new(0.0, std::f32::consts::PI / 2.0, 0.0);
         let mut cam = PinholeCamera::new(
             position, 
@@ -74,7 +50,7 @@ impl Default for Viewport {
         let mut renderer = RayTracer::new(0, 0);
         renderer.set_tp_size(4);
         renderer.set_active_camera(camera.clone());
-        let mut scene = Scene::get_example_scene();
+        let mut scene = insploray::scene::get_example_scene();
         scene.build_bvh();
 
         Self {

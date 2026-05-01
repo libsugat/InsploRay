@@ -50,8 +50,6 @@ impl Drop for Threadpool {
         }
         for worker in &mut self.workers {
             worker.join_and_stop();
-            println!("Worker has shut down.");
         }
-        println!("RenderThreadpool has been dropped. All workers shut down.");
     }
 }

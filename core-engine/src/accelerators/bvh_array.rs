@@ -1,5 +1,5 @@
 use crate::accelerators::{bvh::BVHNode, AABB};
-use crate::geometry::{Geometry, HitPayload, Triangle};
+use crate::geometry::{Geometry, GeometryContext, HitPayload, Triangle};
 use crate::scene::Scene;
 use crate::Ray;
 
@@ -36,12 +36,12 @@ impl AccelerationStructure for BVH {
         };
         let root = BVHNode::build(scene)?;
 
-        let res = bvh.build_recursive(&root);
+        let res = bvh.build_recursive(root);
         assert_eq!(res, 0);
         Some(bvh)
     }
 
-    fn intersect(&self, ray: &Ray) -> Option<HitPayload> {
+    fn intersect(&self, ray: &Ray, g_ctx: &GeometryContext) -> Option<HitPayload> {
         let mut stack = [(0, 0.0); 32];
         let mut stack_ptr = 0i32;
         stack[stack_ptr as usize] = (0, f32::MAX);
@@ -63,7 +63,7 @@ impl AccelerationStructure for BVH {
                     let prims = &self.prims[start..start + count];
                     for prim in prims.iter() {
 
-                        if let Some(payload) = prim.intersect_ray(ray) {
+                        if let Some(payload) = prim.intersect_ray(ray, g_ctx) {
                             if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
                                 hit_distance = payload.hit_distance;
                                 closest_hit = Some(payload);
@@ -115,7 +115,7 @@ impl AccelerationStructure for BVH {
 }
 
 impl BVH {
-    fn build_recursive(&mut self, root:&BVHNode) -> usize {
+    fn build_recursive(&mut self, root:BVHNode) -> usize {
         let index = self.node_type.len();
         match root {
             BVHNode::Internal { bounds, left, right } => {
@@ -127,8 +127,12 @@ impl BVH {
                 self.left.push(0);
                 self.right.push(0);
 
-                self.left[index] = self.build_recursive(left);
-                self.right[index] = self.build_recursive(right);
+                let left_node = (*left).clone();
+                let right_node = (*right).clone();
+                drop(left);
+                drop(right);
+                self.left[index] = self.build_recursive(left_node);
+                self.right[index] = self.build_recursive(right_node);
 
                 index
             },

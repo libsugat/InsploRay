@@ -1,98 +1,68 @@
 use std::error::Error;
-use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
 use std::sync::Arc;
 
-use glam::{Mat4, Vec3};
+use glam::Vec3;
 
 use crate::accelerators::{AccelerationStructure, BVH};
-use crate::file_formats::ExrImage;
 
 use crate::geometry::shapes::Primitive;
-use crate::geometry::{Mesh, shapes::Sphere};
+use crate::geometry::{HitPayload, Triangle};
+use crate::geometry::{GeometryContext, TriangleMesh};
 use crate::lighting::Skybox;
-use crate::materials::Lambertian;
 use crate::materials::{ Material};
+use crate::ray::Ray;
 
 #[derive(Default)]
 pub struct Scene {
     pub spheres: Vec<Primitive>,
-    // let bvh builder consume, it so that memery uses remain low does not spike
-    pub meshes: Option<Vec<Mesh>>,
+    pub meshes : Vec<TriangleMesh>,
+    pub tris_vec: Option<Vec<Triangle>>,
 
     pub materials: Vec<Arc<Material>>,
     pub default_sky_color: Vec3,
 
     pub skybox: Option<Skybox>,
     pub bvh : Option<Arc<dyn AccelerationStructure + Sync + Send>>
+
 }
 
 impl Scene {
-    // This is just something this is not what i want to use, its being used for test
-    // consider following code as a config file that changes like a command in cli
-    pub fn get_example_scene() -> Self {
-        let skybox = match ExrImage::load_exr_image("./assets/env/default_skybox_1_.exr") {
-            Err(e) => {
-                eprintln!("Failed loading EXR: {}", e);
-                None
-            },
-            Ok(exr) => Some(Skybox::load_for_exr(&exr))
-        };
+    pub fn intersect(&self, ray : &Ray) -> Option<HitPayload>{
+        let mut hit_distance = f32::MAX;
+        let mut closest_hit = None;
 
-        let mut scene = Self {
-            spheres: vec![],
-            materials: vec![],
-            // default_sky_color: Vec3::new(0.6, 0.7, 0.9),
-            default_sky_color: 0.051 * Vec3::ONE,
-
-            skybox: skybox,
-            ..Default::default()
-        };
-
-        match scene.load_data_form_obj("./assets/models/Cornell_box.obj") {
-        // match scene.load_data_form_obj("./../InsploRayMemorialScenes/Bunny.obj ") {
-            Ok(_) => println!("Example Scene loaded successfully"),
-            Err(e) => println!("Error loading file : {:?}", e)
+        for sphere in &self.spheres {
+            if let Some(interaction) = sphere.shape.intersect(ray, f32::MAX) {
+                if interaction.base.t < hit_distance {
+                    hit_distance = interaction.base.t;
+                    closest_hit = Some(HitPayload {
+                        hit_distance,
+                        world_position: interaction.base.p,
+                        world_normal: interaction.shading.n,
+                        back_hit: ray.direction.dot(interaction.base.n) > 0.0,
+                        material_index: Some(sphere.material_id as usize),
+                        uv: interaction.base.uv,
+                        ..Default::default()
+                    })
+                }
+            }
         }
 
-        println!("Material : {:?}", scene.materials.len());
-        {
-            let mat_1_bsdf = Lambertian {
-                albedo: Vec3::new(1.0, 0.637328, 0.301854),
-                // albedo: Vec3::ONE * 0.9,
-                ..Default::default()
-            };
-            let index = scene.materials.len();
-
-            let mat = Arc::new(Material {
-                shaders: vec![Arc::new(mat_1_bsdf)],
-                weights: vec![1.0],
-            });
-            scene.materials.push(mat);
-            // let sphere_1 = Sphere {
-            //     position: Vec3::new(0.0, 1.0, 0.0),
-            //     radius: 1.0,
-            //     material_id: index as i32
-            // };
-            let position = Vec3::new(0.0, 1.0, 0.0);
-            let mat = Mat4::from_translation(position) * Mat4::from_rotation_x(FRAC_PI_2)* Mat4::from_rotation_z(0.0) * Mat4::from_rotation_y(PI);
-            println!("{:?}", mat);
-            let mut sphere_1 = Sphere::init_default();
-            sphere_1.transform(mat);
-            // sphere_1.z_max = sphere_1.radius * 0.75;
-            // sphere_1.z_min = - sphere_1.radius * 0.75;
-            sphere_1.phi_max = FRAC_PI_4 * 1.5;
-            scene.spheres.push(Primitive {
-                shape: Arc::new(sphere_1),
-                material_id: index as u32
-            });
-
-            let x = Vec3::new(1.0, 0.0, 0.0);
-            let y = Vec3::new(0.0, 1.0, 0.0);
-            let z = x.cross(y);
-
-            println!("{:?}", z);
+        if let Some(bvh) = &self.bvh {
+            let g_ctx = self.create_context();
+            if let Some(payload) = bvh.intersect(ray, &g_ctx) {
+                if payload.hit_distance > 0.0 && payload.hit_distance < hit_distance {
+                    closest_hit = Some(payload);
+                }
+            }
         }
-        scene
+
+        closest_hit
+    }
+
+
+    pub fn create_context(&self) -> GeometryContext<'_> {
+        GeometryContext { meshes: &self.meshes }
     }
 
     pub fn build_bvh(&mut self) {
@@ -106,21 +76,27 @@ impl Scene {
 
     pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
         match obj_loader::load_from_file(path) {
-            Ok((mut meshes, materials)) => {
-                let size = self.materials.len();
-                self.materials.extend(materials);
+            // Ok((mut meshes, materials)) => {
+            //     let size = self.materials.len();
+            //     self.materials.extend(materials);
 
-                meshes.iter_mut().for_each(|mesh| {
-                    mesh.triangles.iter_mut().for_each(|triangle| {
-                        match triangle.material_id {
-                            None => (),
-                            Some(id) => triangle.material_id = Some(id + size)
-                        }
-                    });
-                });
+            //     meshes.iter_mut().for_each(|mesh| {
+            //         mesh.triangles.iter_mut().for_each(|triangle| {
+            //             match triangle.material_id {
+            //                 None => (),
+            //                 Some(id) => triangle.material_id = Some(id + size)
+            //             }
+            //         });
+            //     });
 
-                self.meshes = Some(meshes);
+            //     self.meshes = Some(meshes);
 
+            //     Ok(())
+            // },
+            Ok((meshes, tris, materials)) => {
+                self.tris_vec = Some(tris);
+                self.meshes = meshes;
+                self.materials = materials;
                 Ok(())
             },
             Err(err) => {
@@ -131,3 +107,6 @@ impl Scene {
 }
 
 pub mod obj_loader;
+
+mod example_scene;
+pub use example_scene::get_example_scene;

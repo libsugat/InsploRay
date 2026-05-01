@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use glam::Vec3;
 
-use crate::geometry::{Mesh, Triangle};
+use crate::geometry::{Triangle, TriangleMesh};
 use crate::materials::Material;
 
 use tobj::{Mesh as TobjMesh, Material as TobjMaterial};
 
-pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<dyn std::error::Error>> {
+pub fn load_from_file(path: &str) ->Result<(Vec<TriangleMesh>, Vec<Triangle>, Vec<Arc<Material>>), Box<dyn std::error::Error>> {
 
     // Load the OBJ file (single-threaded, no material loading)
     let (models, tobj_materials_res) = tobj::load_obj(
@@ -28,40 +28,59 @@ pub fn load_from_file(path: &str) ->Result<(Vec<Mesh>, Vec<Arc<Material>>), Box<
     }
 
     let mut meshes = Vec::new();
+    let mut tris = Vec::new();
 
+    let mut mesh_counter = 0; 
     for model in models.into_iter() {
         let mesh: &TobjMesh = &model.mesh;
+
+        // println!("{}", &model.name);
+        // println!("  id   : {}", mesh_counter);
+        // println!("  vecs : {}", mesh.positions.len() / 3);
+        // println!("  indi : {}", mesh.indices.len() / 3);
+
+        let mut ver_pos = Vec::with_capacity(mesh.positions.len() / 3);
+        for i in (0..mesh.positions.len()).step_by(3) {
+            let x = mesh.positions[i];
+            let y = mesh.positions[i+1];
+            let z = mesh.positions[i+2];
+            ver_pos.push(Vec3::new(x, y, z));
+        }
+        let mut ver_nor = Vec::with_capacity(mesh.normals.len() / 3);
+        for i in (0..mesh.normals.len()).step_by(3) {
+            let x = mesh.normals[i];
+            let y = mesh.normals[i+1];
+            let z = mesh.normals[i+2];
+            ver_nor.push(Vec3::new(x, y, z));
+        }
+
         let mut triangles = Vec::with_capacity(mesh.indices.len()/3);
 
         for i in (0..mesh.indices.len()).step_by(3) {
-            let i0 = mesh.indices[i] as usize;
-            let i1 = mesh.indices[i + 1] as usize;
-            let i2 = mesh.indices[i + 2] as usize;
-
-            let v0 = Vec3::new(
-                mesh.positions[3 * i0],
-                mesh.positions[3 * i0 + 1],
-                mesh.positions[3 * i0 + 2],
+            let t = Triangle::new(
+                mesh.indices[i],
+                mesh.indices[i + 1],
+                mesh.indices[i + 2],
+                // mesh.material_id,
+                mesh_counter
             );
-
-            let v1 = Vec3::new(
-                mesh.positions[3 * i1],
-                mesh.positions[3 * i1 + 1],
-                mesh.positions[3 * i1 + 2],
-            );
-            let v2 = Vec3::new(
-                mesh.positions[3 * i2],
-                mesh.positions[3 * i2 + 1],
-                mesh.positions[3 * i2 + 2],
-            );
-
-            triangles.push(Triangle::new((v0, v1, v2), mesh.material_id));
+            triangles.push(t);
         }
 
-        meshes.push(Mesh::new(model.name, triangles));
+        let my_mesh = TriangleMesh {
+            name: model.name,
+            id: mesh_counter,
+            vertices: ver_pos,
+            normals: ver_nor,
+            material_id: mesh.material_id
+        };
+
+        meshes.push(my_mesh);
+        tris.extend(triangles);
+        mesh_counter += 1;
     }
 
-    Ok((meshes, materials))
+    Ok((meshes, tris, materials))
 }
 
 fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {

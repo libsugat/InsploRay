@@ -128,7 +128,7 @@ impl RayTracer {
 
         let mut integrator = self.integrator.clone();
         let camera = Arc::clone(&self.active_camera);
-        let local_scene = Arc::clone(scene);
+        let local_scene = Arc::clone(&scene);
 
         // Compute tile bounds
         let tile_width = (self.tile_size).min(self.width - tile_x);
@@ -167,10 +167,11 @@ impl RayTracer {
             }
         }
 
-        for _ in 0..jobs_dispached {
+        for i in 0..jobs_dispached {
             let job_result = self.threadpool_result_rx.as_ref().unwrap().recv();
-            if let Ok(tile_acc) = job_result {
-                self.accumulator.merge_tile(tile_acc);
+            match job_result {
+                Ok(tile_acc) => self.accumulator.merge_tile(tile_acc),
+                Err(e) => {dbg!(i, e);}
             }
         }
 
