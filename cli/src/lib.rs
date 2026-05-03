@@ -12,8 +12,8 @@ pub fn get_cpu_count() -> usize {
 pub struct CliConfig {
 
     /// Path to scene to render, ends with .obj
-    #[arg(name = "file")]
-    pub input_file_path: Option<String>,
+    #[arg(name = "scene file")]
+    pub input_file_path: String,
     /// Path to output file. Ending with .exr
     #[arg(short, long)]
     pub output: String,
@@ -37,7 +37,8 @@ pub struct CliConfig {
     #[arg(short, long, default_value_t = 5)]
     pub bounces: u32,
 
-    /// No of threads to be used by the program to render image (no of cpu cores is recomended)
+    /// No of threads to be used by the program to render image (no of cpu cores is recommended)
+    /// if 0 => counts the number of logical cores and uses that many threads
     #[arg(short = 'j', long, default_value_t = 0)]
     pub threads: usize,
 }

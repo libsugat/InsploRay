@@ -24,12 +24,20 @@ impl RenderingWorker {
                                 "Worker {} failed to send result: receiver disconnected. Err : {:?}",
                                 id, e
                             );
+
+                            // To suppress the warning of used variables
+                            #[cfg(not(debug_assertions))]
+                            let _ = (&id, &e);
                             break;
                         }
                     }
                     Err(_) => {
                         #[cfg(debug_assertions)]
                         dbg!("Worker {id} disconnected; Shutting down..");
+
+                        // To suppress the warning of used variables
+                        #[cfg(not(debug_assertions))]
+                        let _ = id;
                         break;
                     }
                 }

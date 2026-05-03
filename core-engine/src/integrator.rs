@@ -141,6 +141,7 @@ impl Integrator {
         return sky_color;
     }
 
+    #[inline]
     fn trace_ray(&self, ray: &Ray, scene: &Scene) -> Option<HitPayload> {
         scene.intersect(ray)
     }

@@ -31,8 +31,6 @@ fn main() {
     let cam = PinholeCamera::new(
         position,
         Vec3::new(0.0, PI / 2.0, 0.0),
-        // Vec3::new(0.0, PI / 2.0 , PI),
-        // Vec3::ZERO,
         50.0,
         36.0,
         [cli_config.width, cli_config.height],
@@ -47,33 +45,26 @@ fn main() {
         ..Default::default()
     };
 
-    match &cli_config.input_file_path {
-        Some(file) => {
-            println!("Loading {}", file);
-            match obj_loader::load_from_file(&file) {
-                Ok((meshes, tris, materials)) => {
-                    scene.meshes = meshes;
-                    scene.tris_vec = Some(tris);
-                    scene.materials = materials;
-                    println!("Scene loaded successfully..");
-                }
-                Err(e) => {
-                    println!("Error loading scene : {}", e);
-                    return;
-                }
-            }
-        },
-        None => {
-            scene = insploray::scene::get_example_scene();
+    let file = &cli_config.input_file_path;
+    println!("Loading {}", file);
+    match obj_loader::load_from_file(&file) {
+        Ok((meshes, tris, materials)) => {
+            scene.meshes = meshes;
+            scene.tris_vec = Some(tris);
+            scene.materials = materials;
+            println!("Scene loaded successfully..");
+        }
+        Err(e) => {
+            println!("Error loading scene : {}", e);
+            return;
         }
     }
 
     // Build Acceleration Structure
     println!("Building BVH");
     scene.build_bvh();
-    println!("Building BVH Done");
-
     let arc_scene = Arc::new(scene);
+    println!("Building BVH Done");
 
     // Get Core affininty and jobs from ci
     let cpu_count = get_cpu_count();
@@ -89,7 +80,6 @@ fn main() {
     renderer.set_tp_size(workers);
     renderer.set_active_camera(Arc::new(cam));
     renderer.update(cli_config.width, cli_config.height);
-    
 
     let start_instant = Instant::now();
     let last_render = Arc::new(AtomicU64::new(0.0_f64.to_bits()));
@@ -102,13 +92,14 @@ fn main() {
             "Rendering: [{wide_bar:.cyan/blue}] {pos}/{len} Samples ({elapsed} | {eta} Estimated) {last}"
         )
         .unwrap()
-        .with_key("eta", |state: &ProgressState, w: &mut dyn Write| write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap())
+        .with_key("eta", |state: &ProgressState, w: &mut dyn Write|
+                write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap())
         .with_key("last", move |_: &ProgressState, w: &mut dyn Write| {
                 let bits = last_render_clone.load(Ordering::Relaxed);
                 let value = f64::from_bits(bits);
                 write!(w, "{:.3}s", value).unwrap();
             })
-        .progress_chars("=>_"));
+        .progress_chars("=>-"));
 
     // Main render loop
     for _i in 0..cli_config.samples {

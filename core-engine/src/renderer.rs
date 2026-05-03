@@ -26,7 +26,7 @@ pub struct RayTracer {
 }
 
 impl RayTracer {
-    // temperory function
+    /// temperory function
     pub fn save_exr(&self, path: &str) {
         let buff = self.accumulator.get_image_buffer();
 
