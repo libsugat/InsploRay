@@ -4,12 +4,14 @@ use glam::Vec3;
 
 use crate::geometry::{Triangle, TriangleMesh};
 use crate::materials::Material;
+use crate::scene::Scene;
 
 use tobj::{Mesh as TobjMesh, Material as TobjMaterial};
 
-pub fn load_from_file(path: &str) ->Result<(Vec<TriangleMesh>, Vec<Triangle>, Vec<Arc<Material>>), Box<dyn std::error::Error>> {
-
-    // Load the OBJ file (single-threaded, no material loading)
+/// This is used to load the mesh and material data from obj scene format
+/// 
+/// It should be taken care that these function is called before building bvh
+pub fn load_from_obj(scene: &mut Scene, path: &str) ->Result<(), Box<dyn std::error::Error>> {
     let (models, tobj_materials_res) = tobj::load_obj(
         path,
         &tobj::LoadOptions {
@@ -18,6 +20,9 @@ pub fn load_from_file(path: &str) ->Result<(Vec<TriangleMesh>, Vec<Triangle>, Ve
             ..Default::default()
         },
     )?;
+
+    let old_material_length = scene.materials.len();
+    let old_mesh_buff_length = scene.meshes.len();
 
     let mut materials: Vec<Arc<Material>> = Vec::new();
     if let Ok(tobj_materials) = tobj_materials_res {
@@ -30,14 +35,8 @@ pub fn load_from_file(path: &str) ->Result<(Vec<TriangleMesh>, Vec<Triangle>, Ve
     let mut meshes = Vec::new();
     let mut tris = Vec::new();
 
-    let mut mesh_counter = 0; 
-    for model in models.into_iter() {
+    for (mesh_i, model) in models.into_iter().enumerate() {
         let mesh: &TobjMesh = &model.mesh;
-
-        // println!("{}", &model.name);
-        // println!("  id   : {}", mesh_counter);
-        // println!("  vecs : {}", mesh.positions.len() / 3);
-        // println!("  indi : {}", mesh.indices.len() / 3);
 
         let mut ver_pos = Vec::with_capacity(mesh.positions.len() / 3);
         for i in (0..mesh.positions.len()).step_by(3) {
@@ -61,26 +60,33 @@ pub fn load_from_file(path: &str) ->Result<(Vec<TriangleMesh>, Vec<Triangle>, Ve
                 mesh.indices[i],
                 mesh.indices[i + 1],
                 mesh.indices[i + 2],
-                // mesh.material_id,
-                mesh_counter
+                (mesh_i + old_mesh_buff_length) as u32
             );
             triangles.push(t);
         }
 
         let my_mesh = TriangleMesh {
             name: model.name,
-            id: mesh_counter,
+            id: (mesh_i + old_mesh_buff_length) as u32,
             vertices: ver_pos,
             normals: ver_nor,
-            material_id: mesh.material_id
+            material_id: mesh.material_id.map(|m_id| m_id + old_material_length)
         };
 
         meshes.push(my_mesh);
         tris.extend(triangles);
-        mesh_counter += 1;
     }
 
-    Ok((meshes, tris, materials))
+    scene.meshes.extend(meshes);
+    if let Some(tris_buffer) = &mut scene.tris_vec {
+        tris_buffer.extend(tris);
+    }
+    else {
+        scene.tris_vec = Some(tris);
+    }
+    scene.materials.extend(materials);
+
+    Ok(())
 }
 
 fn convert_material(mat: &TobjMaterial) -> crate::materials::Material {

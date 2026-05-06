@@ -23,7 +23,6 @@ pub struct Scene {
 
     pub skybox: Option<Skybox>,
     pub bvh : Option<Arc<dyn AccelerationStructure + Sync + Send>>
-
 }
 
 impl Scene {
@@ -75,28 +74,8 @@ impl Scene {
     }
 
     pub fn load_data_form_obj(&mut self, path: &str) -> Result<(), Box<dyn Error>> {
-        match obj_loader::load_from_file(path) {
-            // Ok((mut meshes, materials)) => {
-            //     let size = self.materials.len();
-            //     self.materials.extend(materials);
-
-            //     meshes.iter_mut().for_each(|mesh| {
-            //         mesh.triangles.iter_mut().for_each(|triangle| {
-            //             match triangle.material_id {
-            //                 None => (),
-            //                 Some(id) => triangle.material_id = Some(id + size)
-            //             }
-            //         });
-            //     });
-
-            //     self.meshes = Some(meshes);
-
-            //     Ok(())
-            // },
-            Ok((meshes, tris, materials)) => {
-                self.tris_vec = Some(tris);
-                self.meshes = meshes;
-                self.materials = materials;
+        match obj_loader::load_from_obj(self, path) {
+            Ok(()) => {
                 Ok(())
             },
             Err(err) => {

@@ -11,7 +11,7 @@ use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use insploray::renderer::RayTracer;
 use insploray::Vec3;
 use insploray::cameras::PinholeCamera;
-use insploray::scene::{Scene, obj_loader};
+use insploray::scene::{Scene};
 
 use insploray_cli::{CliConfig, get_cpu_count};
 
@@ -47,11 +47,8 @@ fn main() {
 
     let file = &cli_config.input_file_path;
     println!("Loading {}", file);
-    match obj_loader::load_from_file(&file) {
-        Ok((meshes, tris, materials)) => {
-            scene.meshes = meshes;
-            scene.tris_vec = Some(tris);
-            scene.materials = materials;
+    match scene.load_data_form_obj(file) {
+        Ok(_) => {
             println!("Scene loaded successfully..");
         }
         Err(e) => {

@@ -119,7 +119,7 @@ impl BVH {
         let index = self.node_type.len();
         match root {
             BVHNode::Internal { bounds, left, right } => {
-                self.bounds.push(bounds.clone());
+                self.bounds.push(bounds);
                 self.node_type.push(NodeType::InnerNode);
                 self.prims_start.push(0);
                 self.prims_count.push(0);
@@ -137,7 +137,7 @@ impl BVH {
                 index
             },
             BVHNode::Leaf { bounds, primitives } => {
-                self.bounds.push(bounds.clone());
+                self.bounds.push(bounds);
                 // self.node_type.push(NodeType::Leaf(primitives.clone()));
                 self.node_type.push(NodeType::Leaf);
                 let idx_prims_start = self.prims.len();
